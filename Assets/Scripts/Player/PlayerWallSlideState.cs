@@ -13,7 +13,7 @@ public class PlayerWallSlideState : PlayerAirState
     {
         wasSticking = false;
         stickTimer.Consume();
-
+        player.anim.Play("WallSlide");
 
         player.playerInput.ingame.Jump.performed += OnJumpPressed;
 

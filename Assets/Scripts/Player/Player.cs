@@ -48,7 +48,13 @@ public class Player : MonoBehaviour
 
     public bool isHoldingJump = false;
 
-  
+    public bool isTurningAround = false;
+
+    public bool apexAnimationFinished = false;
+
+    public bool fallAnimationFinished = false;
+
+
     [Header("Speed in Pixels per second")]
 
     [SerializeField] public float pixelWalkSpeed = 75f;
@@ -521,8 +527,17 @@ public class Player : MonoBehaviour
     }
 
 
+    private void OnEndJumpAnimationDone()
+    {
+        // wird automatisch aufgerufen, sobald der Animator den markierten Frame erreicht
+        apexAnimationFinished = true;
+    }
 
-
+    private void OnEndFallAnimationDone()
+    {
+        // wird automatisch aufgerufen, sobald der Animator den markierten Frame erreicht
+        fallAnimationFinished = true;
+    }
 
 
     //private void OnDrawGizmosSelected() { 

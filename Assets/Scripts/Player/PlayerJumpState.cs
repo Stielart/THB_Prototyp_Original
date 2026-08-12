@@ -104,6 +104,7 @@ public class PlayerJumpState : PlayerAirState
             // );
 
             player.rb.linearVelocityY = Mathf.Min(player.rb.linearVelocity.y, 10f);
+            player.anim.Play("JumpEnd");
 
 
 

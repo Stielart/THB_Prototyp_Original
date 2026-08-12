@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PlayerFallState : PlayerAirState
@@ -5,13 +6,17 @@ public class PlayerFallState : PlayerAirState
     override public void Do()
     {
         base.Do();
+
+       
+
     }
+
 
     override public void Enter()
     {
         base.Enter();
         
-        //anim.Play("Fall"); 
+        anim.Play("Fall"); 
     }
 
     override public void Exit()
@@ -48,6 +53,7 @@ public class PlayerFallState : PlayerAirState
     {
         base.Initialize(playerRef);
     }
+
 
     public override float Gravity => player.fallGravityUnit;
 

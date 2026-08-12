@@ -1,12 +1,16 @@
+using System;
 using UnityEngine;
 
 public class PlayerGroundState : PlayerState
 {
+    float absSpeed;
+    float speedRatio;
     public override void Enter()
     {
 
         //anim.Play("Idle"); // Wenn du später Animationen hast
         player.rb.linearVelocity = new Vector2(player.rb.linearVelocity.x, 0f);
+
     }
 
     public override void Exit()
@@ -23,6 +27,7 @@ public class PlayerGroundState : PlayerState
     {
         
         player.isGrounded = player.CheckGround();
+        HandleAnimationState();
 
        
         //if(player.isGrounded && player.)
@@ -51,10 +56,34 @@ public class PlayerGroundState : PlayerState
         
     }
 
+    private void HandleAnimationState()
+    {
+        if (player.isTurningAround)
+        {
+            player.anim.Play("Turn");
+            return;
+        } 
+        absSpeed = Mathf.Abs(player.currentSpeed);
+        if (absSpeed < 0.1f)
+            player.anim.Play("Idle");
 
+        else if(absSpeed >= 0.1f && absSpeed <= player.walkMaxSpeedUnit)
+        {
+            speedRatio =  Mathf.InverseLerp(0f, player.walkMaxSpeedUnit, Mathf.Abs(absSpeed));
+            player.anim.Play("Walk");
 
+        }
+        else if (absSpeed > player.walkMaxSpeedUnit && absSpeed <= player.runMaxSpeedUnit - 3f)
+        {
+            speedRatio = Mathf.InverseLerp(player.walkMaxSpeedUnit, player.runMaxSpeedUnit, Mathf.Abs(absSpeed));
+            player.anim.Play("Run");
+        }
+        else if(absSpeed > player.runMaxSpeedUnit - 3f)
+        {
+            
+            player.anim.Play("MaxSpeed");
+        }
 
-   
-
-
+        player.isTurningAround = false;
+    }
 }

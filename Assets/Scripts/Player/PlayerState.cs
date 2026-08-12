@@ -63,7 +63,8 @@ public abstract class PlayerState : MonoBehaviour
         if (player.xInput == 0)
         {
             // no input → decelerate. Depends highly on parameter, so we use the parameter instead of a hardcoded value.
-            rateToUse = deceleration;  
+            rateToUse = deceleration;
+            player.isTurningAround = false;
         }
         else if (Mathf.Sign(player.xInput) == Mathf.Sign(player.currentSpeed) || Mathf.Abs(player.currentSpeed) < 0.2f)
         {
@@ -72,16 +73,19 @@ public abstract class PlayerState : MonoBehaviour
             if(maxSpeed < Mathf.Abs(player.currentSpeed))
             {
                 rateToUse = deceleration;
+                player.isTurningAround = false;
             }
             else
             {
                 // Same direction or almost stationary → accelerate
-                rateToUse = acceleration;  
+                rateToUse = acceleration;
+                player.isTurningAround = false;
             }
         }
         else
         {
             // Opposite direction → decelerate quickly
+            player.isTurningAround = true;
             rateToUse = turnDeceleration;
         }
 
