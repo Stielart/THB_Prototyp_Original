@@ -15,6 +15,8 @@ public class PlayerWallJumpState : PlayerAirState
     override public void Enter()
     {
         base.Enter();
+        player.anim.Play("WallJump");
+        
 
 
         
@@ -49,6 +51,7 @@ public class PlayerWallJumpState : PlayerAirState
 
         if(lastWallSite * -1 == firstWallSite)
         {
+
             player.SwitchState(player.wallSlideState);
             return;
         }

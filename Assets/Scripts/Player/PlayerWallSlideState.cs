@@ -1,5 +1,7 @@
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEditor.ShaderData;
 
 public class PlayerWallSlideState : PlayerAirState
 {
@@ -11,9 +13,14 @@ public class PlayerWallSlideState : PlayerAirState
     float wallCheck;
     public override void Enter()
     {
+        player.turningLocked = true;
         wasSticking = false;
         stickTimer.Consume();
         player.anim.Play("WallSlide");
+        if (player.CheckWallSite() == 1)
+            player.Turn(turnRight: true);
+        else if (player.CheckWallSite() == -1)
+            player.Turn(turnRight: false);
 
         player.playerInput.ingame.Jump.performed += OnJumpPressed;
 
@@ -69,13 +76,20 @@ public class PlayerWallSlideState : PlayerAirState
 
         if (wasSticking)
         {
-            float bounceX = 5f * wallSite;
+            float bounceX = 10f * wallSite;
             player.rb.linearVelocity = new Vector2(bounceX, -2f);
-            player.currentSpeed = bounceX;  
+            player.currentSpeed = bounceX;
             wasSticking = false;
-            player.SwitchState(player.fallState);
+            player.turningLocked = false;
+            player.inputLockedUntil = Time.time + player.postBounceInputLockDuration; // expliziter Zeitstempel, unabhängig vom State
+            player.SwitchState(player.fallState); // ruft PlayerFallState.Enter() → PlayerAirState.Enter() → setzt zunächst Standardwert
+            player.currentTurnDeceleration = player.wallJumpTurnDecelerationUnit; // danach gezielt überschreiben, wie beim Wall-Jump
             return;
         }
+
+
+
+
 
         player.currentGravity = Mathf.Lerp(player.currentGravity, Gravity, 0.1f);
         player.rb.linearVelocity -= Vector2.up * player.currentGravity * Time.fixedDeltaTime;
@@ -85,7 +99,10 @@ public class PlayerWallSlideState : PlayerAirState
 
         if (player.CheckWallSite() == 0 && player.rb.linearVelocity.y > 0)
         {
+            player.turningLocked = false;
             player.SwitchState(player.jumpState);
+            player.currentGravity = player.jumpGravityUnit;
+
         }
         base.Do();
 
@@ -97,6 +114,7 @@ public class PlayerWallSlideState : PlayerAirState
 
         if (wallCheck != 0)
         {
+            player.turningLocked = false;
             player.SwitchState(player.wallJumpState);
         }
     }

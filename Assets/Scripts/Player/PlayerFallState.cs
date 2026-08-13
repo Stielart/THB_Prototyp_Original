@@ -14,8 +14,13 @@ public class PlayerFallState : PlayerAirState
 
     override public void Enter()
     {
-        base.Enter();
         
+        base.Enter();
+
+        player.currentGravity = player.fallGravityUnit;
+        if (player.previousState == player.wallSlideFallState)
+            anim.Play("WallJump");
+        else
         anim.Play("Fall"); 
     }
 
@@ -42,10 +47,10 @@ public class PlayerFallState : PlayerAirState
         }
         if (player.coyoteTimer.IsActive && player.jumpBuffer.IsActive)
         {
-            player.SwitchState(player.fallState);
+            player.SwitchState(player.jumpState);
             player.coyoteTimer.Consume();
         }
-        if (player.CheckWallL() || player.CheckWallR())
+        if (time > 0.2f && (player.CheckWallL() || player.CheckWallR()))
             player.SwitchState(player.wallSlideFallState);
     }
 

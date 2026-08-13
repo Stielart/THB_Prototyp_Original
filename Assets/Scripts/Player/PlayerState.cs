@@ -45,8 +45,9 @@ public abstract class PlayerState : MonoBehaviour
     public virtual void Do() { }
 
 
-    protected void HandleHorizontalMovement(float acceleration, float deceleration, float turnDeceleration)
+    protected void HandleHorizontalMovement(float acceleration, float deceleration, float turnDeceleration, bool ignoreInput = false)
     {
+        float effectiveInput = ignoreInput ? 0f : player.xInput;
 
         float targetSpeed = 0f;
         float rateToUse;
@@ -54,19 +55,19 @@ public abstract class PlayerState : MonoBehaviour
         float maxSpeed = player.isRunning ? player.runMaxSpeedUnit : player.walkMaxSpeedUnit;
 
         // set target speed based on input
-        if (Mathf.Abs(player.xInput) > 0.7f)
-            targetSpeed = player.xInput * maxSpeed;
+        if (Mathf.Abs(effectiveInput) > 0.7f)
+            targetSpeed = effectiveInput * maxSpeed;
         else
             targetSpeed = 0f;
 
         // Choose the appropriate rate based on input and current speed
-        if (player.xInput == 0)
+        if (effectiveInput == 0)
         {
             // no input → decelerate. Depends highly on parameter, so we use the parameter instead of a hardcoded value.
             rateToUse = deceleration;
             player.isTurningAround = false;
         }
-        else if (Mathf.Sign(player.xInput) == Mathf.Sign(player.currentSpeed) || Mathf.Abs(player.currentSpeed) < 0.2f)
+        else if (Mathf.Sign(effectiveInput) == Mathf.Sign(player.currentSpeed) || Mathf.Abs(player.currentSpeed) < 0.2f)
         {
 
 
@@ -103,6 +104,10 @@ public abstract class PlayerState : MonoBehaviour
     public virtual float Deceleration => player.currentDeceleration;
 
     public virtual float TurnDeceleration => player.currentTurnDeceleration;
+
+    public virtual string StateName => this.GetType().Name;
+
+
 
 
 

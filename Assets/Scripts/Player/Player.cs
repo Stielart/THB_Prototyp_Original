@@ -17,6 +17,8 @@ public class Player : MonoBehaviour
 
     // === STATE MACHINE ===
     public PlayerState currentState;
+
+    public PlayerState previousState;
     public PlayerGroundState groundState;
 
     public PlayerAirState airState;
@@ -54,6 +56,8 @@ public class Player : MonoBehaviour
 
     public bool fallAnimationFinished = false;
 
+    public bool turningLocked = false;
+
 
     [Header("Speed in Pixels per second")]
 
@@ -70,8 +74,22 @@ public class Player : MonoBehaviour
     [SerializeField] public float pixelWallJumpSpeedY = 150f;
 
 
+    [Header("Fall speed in Pixels per second")]
+    [SerializeField] public float pixelFallMaxSpeed = 50f;
 
-   
+    [SerializeField] public float pixelFallWallSlideMaxSpeed = 30f;
+
+    [SerializeField] public float pixelFallWallJumpMaxSpeed = 30f;
+
+    [Header("Fall speed while holding jump in Pixels per second")]
+
+    [SerializeField] public float pixelFallHoldJumpMaxSpeed = 30f;
+
+    [SerializeField] public float pixelFallWallSlideHoldJumpMaxSpeed = 20f;
+
+    [SerializeField] public float pixelFallWallJumpHoldJumpMaxSpeed = 20f;
+
+
     public float walkMaxSpeedUnit;
     public float runMaxSpeedUnit;
     public float jumpHeightUnit;
@@ -87,6 +105,22 @@ public class Player : MonoBehaviour
     public float wallJumpTurnDecelerationUnit;
 
     public float wallJumpDecelerationUnit;
+
+    public float inputLockedUntil = -1f; // Zeitpunkt (Time.time), bis zu dem Input ignoriert wird
+    public float postBounceInputLockDuration = 0.1f; // Dauer, für die Input nach einem Wall-Bounce ignoriert wird
+    #region "Fall Speed in Units per second"
+    public float fallMaxSpeedUnit;
+    public float fallWallSlideMaxSpeedUnit;
+
+    public float fallWallJumpMaxSpeedUnit;
+
+    public float fallHoldJumpMaxSpeedUnit;
+
+    public float fallWallSlideHoldJumpMaxSpeedUnit;
+
+    public float fallWallJumpHoldJumpMaxSpeedUnit;
+
+    #endregion
 
 
     [Header("Momentum Jump Settings")]
@@ -117,6 +151,8 @@ public class Player : MonoBehaviour
     public float wallJumpVelocityY { get; private set; }
 
     public float fallGravityUnit { get; private set; }
+
+    public float wallSlideFallGravityUnit { get; private set; }
     [Header("Jump modifiers")]
     
     [SerializeField] public float airAccelerationMultiplier = 0.75f;
@@ -169,6 +205,8 @@ public class Player : MonoBehaviour
 
 
     [SerializeField] public float wallSlideGravityMod = 1.2f;
+
+    [SerializeField] public float wallSlideFallGravityMod = 0.5f;
 
 
 
@@ -223,11 +261,12 @@ public class Player : MonoBehaviour
 
         rb.bodyType = RigidbodyType2D.Dynamic;
         rb.gravityScale = 0;
-       
 
 
+
+        #region "State Machine AddComponents"
         // === STATE MACHINE INITIALISIERUNG ===
-        // State-Komponenten hinzufügen
+
         groundState = gameObject.AddComponent<PlayerGroundState>();
         airState = gameObject.AddComponent<PlayerAirState>();
         jumpState = gameObject.AddComponent<PlayerJumpState>();
@@ -236,7 +275,11 @@ public class Player : MonoBehaviour
         wallJumpState = gameObject.AddComponent<PlayerWallJumpState>();
         wallSlideFallState = gameObject.AddComponent<PlayerWallSlideFallState>();
 
-        // States initialisieren (wichtig!)
+        #endregion
+
+
+        #region "State Machine Initialize"
+        // States initialisieren
         groundState.Initialize(this);
         airState.Initialize(this);
         jumpState.Initialize(this);
@@ -245,6 +288,7 @@ public class Player : MonoBehaviour
         wallJumpState.Initialize(this);
         wallSlideFallState.Initialize(this);
 
+        #endregion
         // Start-State setzen
         currentState = groundState;
         currentState.Enter();
@@ -259,12 +303,19 @@ public class Player : MonoBehaviour
         fallGravityUnit = jumpGravityUnit * fallGravityMod;  // Fallgeschwindigkeit ist 1,5x schneller als Aufstieg
         wallSlideGravityUnit = jumpGravityUnit * wallSlideGravityMod;
         wallJumpGravityUnit = jumpGravityUnit * wallJumpGravityMod;
+        wallSlideFallGravityUnit = jumpGravityUnit * wallSlideFallGravityMod;
         //Debug.Log($"Jump Gravity: {jumpGravityUnit}, Fall Gravity: {fallGravityUnit}");
         walkMaxSpeedUnit = PixelsPerSecondToUnits(pixelWalkSpeed);
         runMaxSpeedUnit = PixelsPerSecondToUnits(pixelRunSpeed);
 
 
 
+        fallMaxSpeedUnit = PixelsPerSecondToUnits(pixelFallMaxSpeed);
+        fallWallSlideMaxSpeedUnit = PixelsPerSecondToUnits(pixelFallWallSlideMaxSpeed);
+        fallWallJumpMaxSpeedUnit = PixelsPerSecondToUnits(pixelFallWallJumpMaxSpeed);
+        fallHoldJumpMaxSpeedUnit = PixelsPerSecondToUnits(pixelFallHoldJumpMaxSpeed);
+        fallWallSlideHoldJumpMaxSpeedUnit = PixelsPerSecondToUnits(pixelFallWallSlideHoldJumpMaxSpeed);
+        fallWallJumpHoldJumpMaxSpeedUnit = PixelsPerSecondToUnits(pixelFallWallJumpHoldJumpMaxSpeed);
 
         walkAccelerationUnit =
             PixelsPerSecondSquaredToUnits(pixelWalkAcceleration);
@@ -358,7 +409,7 @@ public class Player : MonoBehaviour
 
 
 
-    private void Turn(bool turnRight)
+    public void Turn(bool turnRight)
     {
         if (turnRight)
         {
@@ -380,6 +431,10 @@ public class Player : MonoBehaviour
 
     private void HandleInputTurn(float xInput)
     {
+        if (turningLocked == true)
+            return;  
+      
+
         if (xInput > 0 && !isFacingRight)
         {
 
@@ -395,7 +450,8 @@ public class Player : MonoBehaviour
     public void SwitchState(PlayerState newState)
     {
        
-        currentState.Exit();    
+        currentState.Exit();
+        previousState = currentState;
         currentState = newState;
         currentState.Enter();
 

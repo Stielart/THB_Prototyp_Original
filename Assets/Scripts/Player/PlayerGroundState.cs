@@ -7,6 +7,7 @@ public class PlayerGroundState : PlayerState
     float speedRatio;
     public override void Enter()
     {
+ 
 
         //anim.Play("Idle"); // Wenn du später Animationen hast
         player.rb.linearVelocity = new Vector2(player.rb.linearVelocity.x, 0f);
@@ -85,5 +86,9 @@ public class PlayerGroundState : PlayerState
         }
 
         player.isTurningAround = false;
+
     }
+
+
+    public override string StateName => this.GetType().Name;
 }

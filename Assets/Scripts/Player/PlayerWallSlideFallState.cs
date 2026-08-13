@@ -14,15 +14,20 @@ public class PlayerWallSlideFallState : PlayerAirState
     public override void Exit()
     {
         base.Exit();
+        
         player.playerInput.ingame.Jump.performed -= OnJumpPressed;
     }
 
     public override void FixedDo()
     {
-        player.currentGravity = Mathf.Lerp(player.currentGravity, Gravity, 0.1f);
+        player.currentGravity = Mathf.Lerp(player.currentGravity, Gravity, 0.5f);
         Debug.Log($"currentGravity: {player.currentGravity}, velocity.y: {player.rb.linearVelocity.y}, Gravity target: {Gravity}");
         player.rb.linearVelocity -= Vector2.up * player.currentGravity * Time.fixedDeltaTime;
-  
+
+        if(player.rb.linearVelocity.y < MaxFallSpeed)
+        ClampFallSpeed(MaxFallSpeed);
+
+
     }
 
     public override void Do()
@@ -42,5 +47,7 @@ public class PlayerWallSlideFallState : PlayerAirState
         }
     }
 
-    override public float Gravity => player.wallSlideGravityUnit;
+    override public float Gravity => player.wallSlideFallGravityUnit;
+    public override float MaxFallSpeed => player.fallWallSlideMaxSpeedUnit;
+    //public override float HoldMaxFallSpeed => player.fallWallSlideHoldJumpMaxSpeedUnit;
 }
