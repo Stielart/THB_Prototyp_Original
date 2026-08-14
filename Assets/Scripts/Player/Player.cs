@@ -75,7 +75,7 @@ public class Player : MonoBehaviour
 
 
     [Header("Fall speed in Pixels per second")]
-    [SerializeField] public float pixelFallMaxSpeed = 50f;
+    [SerializeField] public float pixelFallMaxSpeed = 800f;
 
     [SerializeField] public float pixelFallWallSlideMaxSpeed = 30f;
 
@@ -83,7 +83,7 @@ public class Player : MonoBehaviour
 
     [Header("Fall speed while holding jump in Pixels per second")]
 
-    [SerializeField] public float pixelFallHoldJumpMaxSpeed = 30f;
+    [SerializeField] public float pixelFallHoldJumpMaxSpeed = 550f;
 
     [SerializeField] public float pixelFallWallSlideHoldJumpMaxSpeed = 20f;
 

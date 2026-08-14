@@ -691,6 +691,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Player
   anim: {fileID: 0}
   currentState: {fileID: 0}
+  previousState: {fileID: 0}
   groundState: {fileID: 0}
   airState: {fileID: 0}
   fallState: {fileID: 0}
@@ -710,6 +711,7 @@ MonoBehaviour:
   isTurningAround: 0
   apexAnimationFinished: 0
   fallAnimationFinished: 0
+  turningLocked: 0
   pixelWalkSpeed: 95
   pixelRunSpeed: 255
   pixelWalkAcceleration: 380
@@ -717,6 +719,12 @@ MonoBehaviour:
   pixelTurnDeceleration: 1125
   pixelWallJumpSpeedX: 400
   pixelWallJumpSpeedY: 150
+  pixelFallMaxSpeed: 550
+  pixelFallWallSlideMaxSpeed: 30
+  pixelFallWallJumpMaxSpeed: 30
+  pixelFallHoldJumpMaxSpeed: 420
+  pixelFallWallSlideHoldJumpMaxSpeed: 200
+  pixelFallWallJumpHoldJumpMaxSpeed: 200
   walkMaxSpeedUnit: 0
   runMaxSpeedUnit: 0
   jumpHeightUnit: 0
@@ -728,6 +736,14 @@ MonoBehaviour:
   turnDecelerationUnit: 0
   wallJumpTurnDecelerationUnit: 0
   wallJumpDecelerationUnit: 0
+  inputLockedUntil: -1
+  postBounceInputLockDuration: 0.2
+  fallMaxSpeedUnit: 0
+  fallWallSlideMaxSpeedUnit: 0
+  fallWallJumpMaxSpeedUnit: 0
+  fallHoldJumpMaxSpeedUnit: 0
+  fallWallSlideHoldJumpMaxSpeedUnit: 0
+  fallWallJumpHoldJumpMaxSpeedUnit: 0
   pixelBaseJumpHeight: 90
   pixelMaxJumpBonus: 15
   pixelMinSpeedForBonus: 100
@@ -763,6 +779,7 @@ MonoBehaviour:
   wallJumpAccelerationUnit: 0
   fallGravityMod: 1.5
   wallSlideGravityMod: 0.7
+  wallSlideFallGravityMod: 0.5
   currentGravity: 1
   currentSpeed: 0
   currentJumpVelocity: 0

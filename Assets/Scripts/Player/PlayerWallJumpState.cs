@@ -15,6 +15,7 @@ public class PlayerWallJumpState : PlayerAirState
     override public void Enter()
     {
         base.Enter();
+        player.currentTurnDeceleration = player.wallJumpTurnDecelerationUnit;
         player.anim.Play("WallJump");
         
 

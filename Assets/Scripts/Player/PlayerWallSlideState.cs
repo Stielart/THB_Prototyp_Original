@@ -13,6 +13,7 @@ public class PlayerWallSlideState : PlayerAirState
     float wallCheck;
     public override void Enter()
     {
+        
         player.turningLocked = true;
         wasSticking = false;
         stickTimer.Consume();
@@ -48,12 +49,13 @@ public class PlayerWallSlideState : PlayerAirState
            player.jumpVelocity);
 
 
-        //anim.Play("WallSlide"); // Wenn du später Animationen hast
+       
 
     }
     public override void Exit()
     {
         base.Exit();
+        
         player.playerInput.ingame.Jump.performed -= OnJumpPressed;
     }
     override public void FixedDo()
@@ -101,6 +103,7 @@ public class PlayerWallSlideState : PlayerAirState
         {
             player.turningLocked = false;
             player.SwitchState(player.jumpState);
+            player.currentSpeed = 0;
             player.currentGravity = player.jumpGravityUnit;
 
         }
