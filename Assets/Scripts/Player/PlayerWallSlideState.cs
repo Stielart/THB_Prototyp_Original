@@ -13,6 +13,7 @@ public class PlayerWallSlideState : PlayerAirState
     float wallCheck;
     public override void Enter()
     {
+        Debug.Log("bin drin");
         
         player.turningLocked = true;
         wasSticking = false;
@@ -31,6 +32,8 @@ public class PlayerWallSlideState : PlayerAirState
         if (player.currentSpeed < 0)
             player.currentSpeed *= -1;
         float wallSlideSpeed = player.currentSpeed * player.wallSlideSpeedModifier;
+        if(wallSlideSpeed == 0)
+            wallSlideSpeed = player.wallSlideMinSpeedUnit;
 
 
         player.currentGravity = player.jumpGravityUnit * player.wallSlideGravityMod;
@@ -98,7 +101,8 @@ public class PlayerWallSlideState : PlayerAirState
     }
     public override void Do()
     {
-
+        base.Do();
+        if (player.currentState != this) return;
         if (player.CheckWallSite() == 0 && player.rb.linearVelocity.y > 0)
         {
             player.turningLocked = false;
@@ -107,7 +111,6 @@ public class PlayerWallSlideState : PlayerAirState
             player.currentGravity = player.jumpGravityUnit;
 
         }
-        base.Do();
 
     }
 

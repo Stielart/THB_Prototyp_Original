@@ -173,6 +173,8 @@ public class Player : MonoBehaviour
     [SerializeField] public float wallSlideSpeedModifier = 1.5f;
      public float pixelWallSlideSpeed;
 
+    public float pixelWallSlideMinSpeed = 80f;
+
     [SerializeField] public float stickDuration = 5f;
 
     [Header("Apex Hang Settings")]
@@ -200,6 +202,8 @@ public class Player : MonoBehaviour
     public float airDecelerationUnit;
     public float airTurnDecelerationUnit;
     public float wallJumpAccelerationUnit;
+
+    public float wallSlideMinSpeedUnit;
 
     [SerializeField] public float fallGravityMod = 1.5f;
 
@@ -316,6 +320,7 @@ public class Player : MonoBehaviour
         fallHoldJumpMaxSpeedUnit = PixelsPerSecondToUnits(pixelFallHoldJumpMaxSpeed);
         fallWallSlideHoldJumpMaxSpeedUnit = PixelsPerSecondToUnits(pixelFallWallSlideHoldJumpMaxSpeed);
         fallWallJumpHoldJumpMaxSpeedUnit = PixelsPerSecondToUnits(pixelFallWallJumpHoldJumpMaxSpeed);
+        wallSlideMinSpeedUnit = PixelsPerSecondToUnits(pixelWallSlideMinSpeed);
 
         walkAccelerationUnit =
             PixelsPerSecondSquaredToUnits(pixelWalkAcceleration);
@@ -396,6 +401,7 @@ public class Player : MonoBehaviour
 
     private void OnJumpStarted(InputAction.CallbackContext ctx)
     {
+        Debug.Log("OnJumpStarted feuert!");
         // Wird garantiert nur einmal pro Tastendruck ausgelöst,
         // egal wie lange danach gehalten wird
         jumpBuffer.Start(jumpBufferDuration);
@@ -449,13 +455,14 @@ public class Player : MonoBehaviour
 
     public void SwitchState(PlayerState newState)
     {
-       
+        Debug.Log($"=== SwitchState: {currentState.GetType().Name} -> {newState.GetType().Name} ===");
         currentState.Exit();
         previousState = currentState;
         currentState = newState;
         currentState.Enter();
+        
 
-        Debug.Log($"State changed to: {newState.GetType().Name}");
+
     }
 
     private void OnDrawGizmos()
@@ -495,7 +502,7 @@ public class Player : MonoBehaviour
             direction = -1f;
         else 
             direction = 0f;
-        Debug.Log($"CheckWallSite() called: WallL={CheckWallL()}, WallR={CheckWallR()}, direction={direction}");
+        //Debug.Log($"CheckWallSite() called: WallL={CheckWallL()}, WallR={CheckWallR()}, direction={direction}");
         return direction;
     }
 

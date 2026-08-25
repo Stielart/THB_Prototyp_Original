@@ -21,7 +21,9 @@ public class PlayerWallSlideFallState : PlayerAirState
     public override void Exit()
     {
         base.Exit();
+        
         player.turningLocked = false;
+        player.inputLockedUntil = Time.time + player.postBounceInputLockDuration;
         player.playerInput.ingame.Jump.performed -= OnJumpPressed;
     }
 
@@ -41,11 +43,15 @@ public class PlayerWallSlideFallState : PlayerAirState
     public override void Do()
     {
         base.Do();
+       
 
         if (player.CheckWallSite() == 0 )
         {
-            
-            player.SwitchState(player.fallState);
+            player.currentSpeed = 0;
+            if(player.isGrounded)
+                player.SwitchState(player.groundState);
+            else
+                player.SwitchState(player.fallState);
             player.currentGravity = player.jumpGravityUnit;
 
         }

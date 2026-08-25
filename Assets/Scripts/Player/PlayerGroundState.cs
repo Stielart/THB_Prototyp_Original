@@ -26,25 +26,25 @@ public class PlayerGroundState : PlayerState
 
     public override void Do()
     {
-        
+        Debug.Log($"[Ground.Do] isGrounded={player.isGrounded}, buffer={player.jumpBuffer.IsActive}");
         player.isGrounded = player.CheckGround();
         HandleAnimationState();
 
-       
+
         //if(player.isGrounded && player.)
 
-        
 
+        
         if (player.isGrounded && player.jumpBuffer.IsActive) {
 
-          
+            
             player.SwitchState(player.jumpState);
             player.jumpBuffer.Consume();
             return;
 
 
         }
-
+       
         if (!player.isGrounded)
         {
             player.isGrounded = false;

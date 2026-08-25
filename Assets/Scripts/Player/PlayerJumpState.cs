@@ -81,7 +81,7 @@ public class PlayerJumpState : PlayerAirState
         float gravityToUse;
         if (isAtApex)
         {
-            Debug.Log($"APEX! Velocity.y: {player.rb.linearVelocity.y:F2}");
+            
             gravityToUse = player.jumpGravityUnit * player.apexHangMultiplier;
             player.anim.Play("JumpEnd");
         }
@@ -95,7 +95,9 @@ public class PlayerJumpState : PlayerAirState
         player.rb.linearVelocity -= Vector2.up * player.currentGravity * Time.fixedDeltaTime;
 
         if (!player.isHoldingJump && player.rb.linearVelocity.y > 0)
+          
         {
+            Debug.Log("JUMP CUT ausgelöst! isHoldingJump=" + player.isHoldingJump);
             //player.rb.linearVelocity = new Vector2(
             //    player.rb.linearVelocity.x,
             //    player.rb.linearVelocity.y * player.jumpCutMultiplier
@@ -116,12 +118,13 @@ public class PlayerJumpState : PlayerAirState
 
         if (player.rb.linearVelocity.y <= 0)
             player.SwitchState(player.fallState);
-        
 
-        else if(player.CheckWallL() || player.CheckWallR())
+
+        else if (player.CheckWallL() || player.CheckWallR())
             player.SwitchState(player.wallSlideState);
-       
-       
+
+
+
 
 
     }
