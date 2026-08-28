@@ -5597,14 +5597,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40ffc917bcd22e345a3f6fc1b411cdf5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraControl
-  playerCamera: {fileID: 887485352}
-  standardXPosition: {fileID: 2132394554}
-  standardYPosition: {fileID: 2132394554}
-  runningRightXPosition: {fileID: 413915508}
-  runningLeftXPosition: {fileID: 1090195539}
-  upYPosition: {fileID: 1659980679}
-  downYPosition: {fileID: 2071143682}
   player: {fileID: 549305384}
+  rightOffsetXValue: 6
+  leftOffsetXValue: -6
+  upOffsetYValue: 2
+  downOffsetYValue: -2
 --- !u!1 &2071143682
 GameObject:
   m_ObjectHideFlags: 0

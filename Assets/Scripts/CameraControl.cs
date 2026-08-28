@@ -6,46 +6,50 @@ using System.Runtime.CompilerServices;
 
 public class CameraControl : MonoBehaviour
 {
-    [SerializeField] private CinemachineCamera playerCamera;
-    [SerializeField] public GameObject standardXPosition;
-    [SerializeField] public GameObject standardYPosition;
 
-    [SerializeField] public GameObject runningRightXPosition;
-    [SerializeField] public GameObject runningLeftXPosition;
 
-    [SerializeField] public GameObject upYPosition;
-    [SerializeField] public GameObject downYPosition;
+
+
+
+
 
     [SerializeField] private Player player;
 
+    //[SerializeField] private CameraAncle cameraAncle;
+
+    [Header("Camera Offset Values")]
+    [SerializeField] private float rightOffsetXValue = 6f;
+    [SerializeField] private float leftOffsetXValue = -6f;
+
+    [SerializeField] private float upOffsetYValue = 2f;
+    [SerializeField] private float downOffsetYValue = -2f;
+
+    [SerializeField] public float deadZoneRightThreshold = 3f;
+    [SerializeField] public float deadZoneLeftThreshold = 3f;
 
 
-    private float currentOffsetX;
+    private float currentOffsetX = 0;
+    private float currentOffsetY = 0;
 
-    private float standardOffsetX;
-    private float rightOffsetX;
-    private float leftOffsetX;
-
-    private float standardOffsetY;
-    private float upOffsetY;
-    private float downOffsetY;
-
-    private float targetX;
+    private float targetX = 3f;
     private float targetY;
+
+    private float distanceFromBoxCenter = 0f;
+
+
+
+
+    public bool isLockedRight = true;
 
     private PlayerState currentState;
 
     private PlayerState previousState;
+    public float deadZoneX; 
 
     void Awake()
     {
-        standardOffsetX = transform.localPosition.x;
-        rightOffsetX = runningRightXPosition.transform.localPosition.x;
-        leftOffsetX = runningLeftXPosition.transform.localPosition.x;
+        deadZoneX = player.transform.position.x;
 
-        standardOffsetY = standardYPosition.transform.localPosition.y;
-        upOffsetY = upYPosition.transform.localPosition.y;
-        downOffsetY = downYPosition.transform.localPosition.y;
 
         currentState = player.currentState;
         previousState = currentState;
@@ -68,25 +72,13 @@ public class CameraControl : MonoBehaviour
     private void LateUpdate()
     {
         CalculateCameraPosition();
+        
        
     }
 
 
 
 
-    private void CalculateCameraPosition()
-    {
-        HandleStateChange();
-        UpdateTargetX();
-        UpdateTargetY();
-
-
-
-
-
-
-
-    }
 
 
 
@@ -104,20 +96,42 @@ public class CameraControl : MonoBehaviour
 
     }
 
+    private void CalculateCameraPosition()
+    {
+        HandleStateChange();
+        UpdateBoxPosition();
+        UpdateTargetX();
+        UpdateTargetY();
+
+        
+   
+        transform.localPosition = new Vector2(targetX, targetY);
+
+    }
 
     private void UpdateTargetX()
     {
-        
         bool isNormalGroundedOrAir = currentState == player.groundState
                                     || currentState == player.jumpState
-                                    || currentState == player.fallState;
+                                    || currentState == player.fallState
+                                    || currentState == player.wallJumpState;
 
         if (isNormalGroundedOrAir)
-            targetX = player.isFacingRight ? rightOffsetX : leftOffsetX;
-        else if (currentState == player.wallSlideState || currentState == player.wallSlideFallState)
-            targetX = 0f; 
-        else if (currentState == player.wallJumpState)
-            targetX = player.isFacingRight ? rightOffsetX : leftOffsetX;
+            if (distanceFromBoxCenter >= deadZoneRightThreshold)
+            {
+                targetX = rightOffsetXValue; // größerer Offset, weil rechts geschoben wird
+                isLockedRight = true;
+            }
+            else if (distanceFromBoxCenter <= -deadZoneLeftThreshold)
+            {
+                targetX = leftOffsetXValue;
+                isLockedRight = false;
+            }
+            // sonst: targetX bleibt unverändert (Dead Zone, nichts passiert)
+            else if (currentState == player.wallSlideState || currentState == player.wallSlideFallState)
+                targetX = 0f;
+
+        Debug.Log("targetX: " + targetX); 
     }
 
 
@@ -128,14 +142,45 @@ public class CameraControl : MonoBehaviour
         bool isFallingOrWallFalling = currentState == player.fallState || currentState == player.wallSlideFallState;
         if (isFallingOrWallFalling)
         {
-            targetY = downOffsetY;
+            targetY = downOffsetYValue;
         }
         else if(currentState == player.groundState)
         {
-            targetY = standardOffsetY;
+            targetY = 0f;
         }
 
     }
 
 
+    
+
+    void UpdateBoxPosition()
+    {
+        distanceFromBoxCenter = player.transform.position.x - deadZoneX;
+
+        if (distanceFromBoxCenter > deadZoneRightThreshold)
+            deadZoneX = player.transform.position.x - deadZoneRightThreshold; // Box wird geschoben, Spieler bleibt GENAU an der Wand
+        else if (distanceFromBoxCenter < -deadZoneLeftThreshold)
+            deadZoneX = player.transform.position.x + deadZoneLeftThreshold;
+    }
+
+
+    private void OnDrawGizmos()
+    {
+        // Anker-Position (grüner Punkt)
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(new Vector3(deadZoneX, transform.position.y, 0), 0.1f);
+
+        // Rechte Schwelle (rote Linie)
+        Gizmos.color = Color.red;
+        Vector3 rightThresholdPos = new Vector3(deadZoneX + deadZoneRightThreshold, transform.position.y - 1f, 0);
+        Vector3 rightThresholdPosTop = new Vector3(deadZoneX + deadZoneRightThreshold, transform.position.y + 1f, 0);
+        Gizmos.DrawLine(rightThresholdPos, rightThresholdPosTop);
+
+        // Linke Schwelle (blaue Linie)
+        Gizmos.color = Color.blue;
+        Vector3 leftThresholdPos = new Vector3(deadZoneX - deadZoneLeftThreshold, transform.position.y - 1f, 0);
+        Vector3 leftThresholdPosTop = new Vector3(deadZoneX - deadZoneLeftThreshold, transform.position.y + 1f, 0);
+        Gizmos.DrawLine(leftThresholdPos, leftThresholdPosTop);
+    }
 }
