@@ -31,12 +31,20 @@ public class CameraControl : MonoBehaviour
     private float currentOffsetX = 0;
     private float currentOffsetY = 0;
 
-    private float targetX = 3f;
-    private float targetY;
+    public float targetX = 3f;
+    public float targetY;
 
     private float distanceFromBoxCenter = 0f;
 
+    private float transitionStartX;
+    private float transitionStartY;
+    private float transitionStartTimeX;
+    private float transitionStartTimeY;
 
+    private const float transitionDurationX = 0.4f;
+    private const float transitionDurationY = 0.4f;
+
+    public bool isXFrozen = false;
 
 
     public bool isLockedRight = true;
@@ -44,8 +52,8 @@ public class CameraControl : MonoBehaviour
     private PlayerState currentState;
 
     private PlayerState previousState;
-    public float deadZoneX; 
-
+    public float deadZoneX;
+   
     void Awake()
     {
         deadZoneX = player.transform.position.x;
@@ -102,44 +110,64 @@ public class CameraControl : MonoBehaviour
         UpdateBoxPosition();
         UpdateTargetX();
         UpdateTargetY();
-
+                UpdateTransitionX();
+                UpdateTransitionY();
         
    
-        transform.localPosition = new Vector2(targetX, targetY);
+        transform.localPosition = new Vector2(currentOffsetX, currentOffsetY);
 
     }
 
     private void UpdateTargetX()
     {
+
+        float previousTargetX = targetX;
         bool isNormalGroundedOrAir = currentState == player.groundState
                                     || currentState == player.jumpState
                                     || currentState == player.fallState
                                     || currentState == player.wallJumpState;
+        if (!isXFrozen)
+        {
+            targetX = transform.localPosition.x; // Kamera bleibt an der aktuellen X-Position
 
-        if (isNormalGroundedOrAir)
-            if (distanceFromBoxCenter >= deadZoneRightThreshold)
-            {
-                targetX = rightOffsetXValue; // größerer Offset, weil rechts geschoben wird
-                isLockedRight = true;
-            }
-            else if (distanceFromBoxCenter <= -deadZoneLeftThreshold)
-            {
-                targetX = leftOffsetXValue;
-                isLockedRight = false;
-            }
-            // sonst: targetX bleibt unverändert (Dead Zone, nichts passiert)
-            else if (currentState == player.wallSlideState || currentState == player.wallSlideFallState)
-                targetX = 0f;
 
-        Debug.Log("targetX: " + targetX); 
+            if (isNormalGroundedOrAir)
+                if (distanceFromBoxCenter >= deadZoneRightThreshold)
+                {
+                    targetX = rightOffsetXValue; // größerer Offset, weil rechts geschoben wird
+                    isLockedRight = true;
+                }
+                else if (distanceFromBoxCenter <= -deadZoneLeftThreshold)
+                {
+                    targetX = leftOffsetXValue;
+                    isLockedRight = false;
+                }
+                // sonst: targetX bleibt unverändert (Dead Zone, nichts passiert)
+                else if (currentState == player.wallSlideState || currentState == player.wallSlideFallState)
+                    targetX = 0f;
+        }
+
+
+
+        Debug.Log("targetX: " + targetX);
+
+        if (targetX != previousTargetX)
+        {
+            StartTransitionX(targetX);
+        }
+
+
+
     }
 
 
     private void UpdateTargetY()
     {
-        
+        float previousTargetY = targetY;
+
 
         bool isFallingOrWallFalling = currentState == player.fallState || currentState == player.wallSlideFallState;
+        bool isWallSliding = currentState == player.wallSlideState;
         if (isFallingOrWallFalling)
         {
             targetY = downOffsetYValue;
@@ -149,6 +177,20 @@ public class CameraControl : MonoBehaviour
             targetY = 0f;
         }
 
+        else if (isWallSliding)
+        {
+            targetY = upOffsetYValue;
+        }
+       
+
+        if (targetY != previousTargetY)
+        {
+            StartTransitionY(targetY);
+        }
+
+
+
+
     }
 
 
@@ -156,6 +198,8 @@ public class CameraControl : MonoBehaviour
 
     void UpdateBoxPosition()
     {
+
+        if (isXFrozen) return;
         distanceFromBoxCenter = player.transform.position.x - deadZoneX;
 
         if (distanceFromBoxCenter > deadZoneRightThreshold)
@@ -163,6 +207,62 @@ public class CameraControl : MonoBehaviour
         else if (distanceFromBoxCenter < -deadZoneLeftThreshold)
             deadZoneX = player.transform.position.x + deadZoneLeftThreshold;
     }
+
+    void StartTransitionX(float newTargetX)
+    {
+        transitionStartX = currentOffsetX; // "wo bin ich JETZT" wird als neuer Ausgangspunkt festgehalten
+        transitionStartY = currentOffsetY; // "wo bin ich JETZT" wird als neuer Ausgangspunkt festgehalten
+        transitionStartTimeX = Time.time;    // "JETZT" als Startzeitpunkt merken
+        targetX = newTargetX;               // das eigentliche Ziel setzen
+                    // das eigentliche Ziel setzen
+    }
+
+    void StartTransitionY(float newTargetY)
+    {
+        transitionStartY = currentOffsetY; // "wo bin ich JETZT" wird als neuer Ausgangspunkt festgehalten
+        transitionStartTimeY = Time.time;    // "JETZT" als Startzeitpunkt merken
+        targetY = newTargetY;               // das eigentliche Ziel setzen
+    }
+
+    void UpdateTransitionX()
+    {
+        float elapsedX = Time.time - transitionStartTimeX; // wie viele Sekunden sind seit dem Start vergangen?
+        float progressX = Mathf.Clamp01(elapsedX / transitionDurationX); // als Prozentsatz (0 bis 1) der Gesamtdauer
+
+        currentOffsetX = Mathf.Lerp(transitionStartX, targetX, progressX);
+
+        
+    }
+
+    void UpdateTransitionY()
+    {
+        float elapsedY = Time.time - transitionStartTimeY; // wie viele Sekunden sind seit dem Start vergangen?
+        float progressY = Mathf.Clamp01(elapsedY / transitionDurationY); // als Prozentsatz (0 bis 1) der Gesamtdauer
+        if (currentState != player.groundState)
+            currentOffsetY = Mathf.Lerp(transitionStartY, targetY, progressY);
+        else
+            currentOffsetY = 0f;
+    }
+
+    public void FreezeXAt(float worldX)
+    {
+        isXFrozen = true;
+        float relativeTarget = worldX - player.transform.position.x;
+        if (relativeTarget != targetX)
+        {
+            targetX = relativeTarget;
+            deadZoneX = relativeTarget + worldX;
+            StartTransitionX(targetX);
+        }
+    }
+
+    public void UnfreezeX()
+    {
+        isXFrozen = false;
+        deadZoneX = player.transform.position.x;
+    }
+
+
 
 
     private void OnDrawGizmos()
