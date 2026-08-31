@@ -41,6 +41,9 @@ public class Player : MonoBehaviour
     [SerializeField] private Transform airbornePosL;
     [SerializeField] private Transform airbornePosR;
 
+    [SerializeField] public Transform ceilingCheckR;
+    [SerializeField] public Transform ceilingCheckL;
+
     // === STATE BOOLS (public für States) ===
     public bool isGrounded = true;
     
@@ -242,6 +245,9 @@ public class Player : MonoBehaviour
 
     [SerializeField] private Vector2 groundCheckOffset;
 
+    [SerializeField] private Vector2 ceilingCheckOffsetL;
+    [SerializeField] private Vector2 ceilingCheckOffsetR;
+
     [SerializeField] private Vector2 wallCheckOffsetR;
 
     [SerializeField] private Vector2 wallCheckOffsetL;
@@ -249,6 +255,8 @@ public class Player : MonoBehaviour
     [SerializeField] public float groundRaycastLength = 0.1f;
 
     [SerializeField] public float wallRaycastLength = 0.1f;
+    [SerializeField] public float ceilingRaycastLength = 0.5f;
+
     [SerializeField] public LayerMask groundMask;
 
     [Header("Animation Curves")]
@@ -479,6 +487,9 @@ public class Player : MonoBehaviour
         Gizmos.DrawLine(transform.position, transform.position + Vector3.right * wallRaycastLength);
         Gizmos.DrawLine(transform.position, transform.position + Vector3.left * wallRaycastLength);
 
+       // Gizmos.DrawLine(ceilingCheckL.position, ceilingCheckL.position + Vector3.up * ceilingRaycastLength);
+       // Gizmos.DrawLine(ceilingCheckR.position, ceilingCheckR.position + Vector3.up * ceilingRaycastLength);
+
     }
 
 
@@ -492,7 +503,39 @@ public class Player : MonoBehaviour
         return hit.collider != null;
     }
 
-   
+    /// <summary>
+    /// Prüft per Raycast, ob die Decke links und/oder rechts blockiert ist.
+    /// </summary>
+    /// <returns>
+    /// -1 = linke Seite blockiert, 1 = rechte Seite blockiert, 0 = beide Seiten blockiert oder frei.
+    /// </returns>
+    public int CheckCeiling()
+    {
+        int ceilingCheck = 0;
+        Vector2 origin = (Vector2)transform.position + ceilingCheckOffsetL;
+        RaycastHit2D hitL = Physics2D.Raycast(origin, Vector2.up, ceilingRaycastLength, groundMask);
+        origin = (Vector2)transform.position + ceilingCheckOffsetR;
+        RaycastHit2D hitR = Physics2D.Raycast(origin, Vector2.up, ceilingRaycastLength, groundMask);
+        Debug.DrawRay((Vector2)transform.position + ceilingCheckOffsetL, Vector2.up * ceilingRaycastLength, hitL.collider != null ? Color.green : Color.red);
+        Debug.DrawRay((Vector2)transform.position + ceilingCheckOffsetR, Vector2.up * ceilingRaycastLength, hitR.collider != null ? Color.green : Color.red);
+
+        if (hitL.collider == true && hitR.collider == false)
+        {
+            ceilingCheck = -1; // Linke Seite ist blockiert
+        }
+        else if (hitR.collider == true && hitL.collider == false)
+        {
+            ceilingCheck = 1; // Rechte Seite ist blockiert
+        }
+        else if ((hitL.collider == true && hitR.collider == true) || (hitL.collider == false && hitR.collider == false))
+        {
+            ceilingCheck = 0; // Beide Seiten sind blockiert oder frei
+        }
+
+        return ceilingCheck;
+    }
+
+
     public float CheckWallSite()
     {
         float direction = 0f;

@@ -3,7 +3,8 @@ using UnityEngine.Rendering;
 
 public class PlayerJumpState : PlayerAirState
 {
-    
+
+
     public override void Do()
     {
         //base.Do();
@@ -12,7 +13,7 @@ public class PlayerJumpState : PlayerAirState
 
     public override void Enter()
     {
-        player.anim.Play("Jump"); // Wenn du später Animationen hast
+        player.anim.Play("Jump"); 
         Debug.Log("JumpState Enter");
 
         player.currentGravity = player.jumpGravityUnit;
@@ -72,11 +73,13 @@ public class PlayerJumpState : PlayerAirState
     public override void FixedDo()
     {
         base.FixedDo();
+        ResolveCornerCollision();
         bool isAtApex = Mathf.Abs(player.rb.linearVelocity.y) < player.apexHangRange
                 && time > 0.15f
                 && player.isHoldingJump;  // Nur wenn Button gehalten!
 
-
+        
+        
  
         float gravityToUse;
         if (isAtApex)
@@ -98,13 +101,7 @@ public class PlayerJumpState : PlayerAirState
           
         {
             Debug.Log("JUMP CUT ausgelöst! isHoldingJump=" + player.isHoldingJump);
-            //player.rb.linearVelocity = new Vector2(
-            //    player.rb.linearVelocity.x,
-            //    player.rb.linearVelocity.y * player.jumpCutMultiplier
-
-
-            // );
-
+         
             player.rb.linearVelocityY = Mathf.Min(player.rb.linearVelocity.y, 10f);
             player.anim.Play("JumpEnd");
 
@@ -112,10 +109,7 @@ public class PlayerJumpState : PlayerAirState
 
         }
 
-        //player.rb.linearVelocity += Vector2.down *
-        //player.jumpGravityUnit *
-        //Time.fixedDeltaTime;
-
+   
         if (player.rb.linearVelocity.y <= 0)
             player.SwitchState(player.fallState);
 
@@ -137,9 +131,24 @@ public class PlayerJumpState : PlayerAirState
 
     }
 
+    private void ResolveCornerCollision()
+    {
+        int maxIterations = 20; // Sicherheitsnetz gegen Endlosschleifen
+        int iterations = 0;
+        float pushStep = 0.05f; // kleine Schrittweite pro Iteration
+
+        while (player.CheckCeiling() != 0 && iterations < maxIterations)
+        {
+            int direction = player.CheckCeiling();
+            // direction = -1 bedeutet "links blockiert" -> nach RECHTS schieben
+            // direction = 1 bedeutet "rechts blockiert" -> nach LINKS schieben
+            player.transform.position += new Vector3(-direction * pushStep, 0, 0);
+            iterations++;
+        }
+    }
 
 
-    
+
 
     public override float Gravity => player.jumpGravityUnit;
 
