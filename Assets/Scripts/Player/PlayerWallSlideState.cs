@@ -1,7 +1,6 @@
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using static UnityEditor.ShaderData;
 
 public class PlayerWallSlideState : PlayerAirState
 {
@@ -13,7 +12,7 @@ public class PlayerWallSlideState : PlayerAirState
     float wallCheck;
     public override void Enter()
     {
-        Debug.Log("bin drin");
+        // Debug.Log("bin drin");
         
         player.turningLocked = true;
         wasSticking = false;
@@ -37,7 +36,7 @@ public class PlayerWallSlideState : PlayerAirState
 
 
         player.currentGravity = player.jumpGravityUnit * player.wallSlideGravityMod;
-        Debug.Log($"WallSlideState Enter, wallSlideSpeed: {wallSlideSpeed}, currentGravity: {player.currentGravity}");
+        // Debug.Log($"WallSlideState Enter, wallSlideSpeed: {wallSlideSpeed}, currentGravity: {player.currentGravity}");
 
         player.jumpVelocity = player.CalculateJumpVelocity(
          wallSlideSpeed,

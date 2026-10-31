@@ -24,8 +24,8 @@ public class PlayerWallJumpState : PlayerAirState
 
         endGravity = player.currentGravity;
         player.currentGravity = Gravity;
-        Debug.Log("WallJumpState Enter, currentGravity: " + player.currentGravity);
-        Debug.Log("wallJumpSpeedXUnit: " + player.wallJumpSpeedXUnit);
+        // Debug.Log("WallJumpState Enter, currentGravity: " + player.currentGravity);
+        // Debug.Log("wallJumpSpeedXUnit: " + player.wallJumpSpeedXUnit);
         firstWallSite = player.CheckWallSite();
         player.rb.linearVelocity = new Vector2(player.wallJumpSpeedXUnit * firstWallSite, player.wallJumpSpeedYUnit);
         player.isGrounded = false;
@@ -70,7 +70,7 @@ public class PlayerWallJumpState : PlayerAirState
         //HandleHorizontalMovement(player.airAccelerationUnit, player.airDecelerationUnit, player.airTurnDecelerationUnit);
 
         player.currentGravity = Mathf.Lerp(  gravityToUse, player.jumpGravityUnit, curveValue);
-        Debug.Log("currentGravity: " + player.currentGravity);
+        // Debug.Log("currentGravity: " + player.currentGravity);
         player.rb.linearVelocity -= Vector2.up * player.currentGravity * Time.fixedDeltaTime;
         player.currentDeceleration = Mathf.Lerp(player.currentDeceleration, player.airDecelerationUnit, 0.1f);
     }

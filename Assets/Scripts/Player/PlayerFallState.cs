@@ -60,7 +60,7 @@ public class PlayerFallState : PlayerAirState
 
 
         LerpTowardsHoldTarget(rb.linearVelocity.y, -HoldMaxFallSpeed, -MaxFallSpeed, 0.1f);
-        Debug.Log("Y-Speed: " + rb.linearVelocity.y + ", MaxFallSpeed: " + MaxFallSpeed + ", HoldMaxFallSpeed: " + HoldMaxFallSpeed);
+        // Debug.Log("Y-Speed: " + rb.linearVelocity.y + ", MaxFallSpeed: " + MaxFallSpeed + ", HoldMaxFallSpeed: " + HoldMaxFallSpeed);
     }
 
     override public void Initialize(Player playerRef)

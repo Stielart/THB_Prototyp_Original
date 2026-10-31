@@ -14,7 +14,7 @@ public class PlayerJumpState : PlayerAirState
     public override void Enter()
     {
         player.anim.Play("Jump"); 
-        Debug.Log("JumpState Enter");
+        // Debug.Log("JumpState Enter");
 
         player.currentGravity = player.jumpGravityUnit;
 
@@ -32,7 +32,7 @@ public class PlayerJumpState : PlayerAirState
 
         player.isGrounded = false;
 
-        Debug.Log($"Speed: {player.currentSpeed:F2}, Height: {heightBasedOnSpeed:F1}px");
+        // Debug.Log($"Speed: {player.currentSpeed:F2}, Height: {heightBasedOnSpeed:F1}px");
     }
 
 
@@ -100,7 +100,7 @@ public class PlayerJumpState : PlayerAirState
         if (!player.isHoldingJump && player.rb.linearVelocity.y > 0)
           
         {
-            Debug.Log("JUMP CUT ausgelöst! isHoldingJump=" + player.isHoldingJump);
+            // Debug.Log("JUMP CUT ausgelöst! isHoldingJump=" + player.isHoldingJump);
          
             player.rb.linearVelocityY = Mathf.Min(player.rb.linearVelocity.y, 10f);
             player.anim.Play("JumpEnd");

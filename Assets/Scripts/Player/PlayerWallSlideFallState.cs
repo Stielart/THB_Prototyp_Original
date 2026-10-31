@@ -31,7 +31,7 @@ public class PlayerWallSlideFallState : PlayerAirState
     {
        // player.currentGravity = Mathf.Lerp(player.currentGravity, Gravity, 0.5f);
        float currentFallSpeed = LerpTowardsHoldTarget(player.rb.linearVelocity.y, -MaxFallSpeed, -MaxFallSpeed, 0.05f);
-        Debug.Log($"currentGravity: {player.currentGravity}, velocity.y: {player.rb.linearVelocity.y}, Gravity target: {Gravity}");
+        // Debug.Log($"currentGravity: {player.currentGravity}, velocity.y: {player.rb.linearVelocity.y}, Gravity target: {Gravity}");
         //player.rb.linearVelocity -= Vector2.up * player.currentGravity *  Time.fixedDeltaTime;
         player.rb.linearVelocity = new Vector2(player.rb.linearVelocity.x, currentFallSpeed);
         //if (player.rb.linearVelocity.y < MaxFallSpeed)

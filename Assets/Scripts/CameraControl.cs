@@ -149,7 +149,7 @@ public class CameraControl : MonoBehaviour
 
 
 
-        Debug.Log("targetX: " + targetX);
+        // Debug.Log("targetX: " + targetX);
 
         if (targetX != previousTargetX)
         {

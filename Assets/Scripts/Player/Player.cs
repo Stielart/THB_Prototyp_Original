@@ -344,8 +344,8 @@ public class Player : MonoBehaviour
 
         wallJumpSpeedXUnit = 
             PixelsPerSecondToUnits(pixelWallJumpSpeedX);
-        Debug.Log("runMaxSpeedUnit: " + runMaxSpeedUnit); 
-        Debug.Log("wallJumpSpeedXUnit: " + wallJumpSpeedXUnit);
+        // Debug.Log("runMaxSpeedUnit: " + runMaxSpeedUnit); 
+        // Debug.Log("wallJumpSpeedXUnit: " + wallJumpSpeedXUnit);
 
         wallJumpDecelerationUnit = PixelsPerSecondSquaredToUnits(pixelWalkDeceleration * wallJumpDecelerationMultiplier);
         wallJumpAccelerationUnit = PixelsPerSecondSquaredToUnits(pixelWalkAcceleration * wallJumpAccelerationMultiplier);
@@ -409,7 +409,7 @@ public class Player : MonoBehaviour
 
     private void OnJumpStarted(InputAction.CallbackContext ctx)
     {
-        Debug.Log("OnJumpStarted feuert!");
+        // Debug.Log("OnJumpStarted feuert!");
         // Wird garantiert nur einmal pro Tastendruck ausgelöst,
         // egal wie lange danach gehalten wird
         jumpBuffer.Start(jumpBufferDuration);
@@ -463,7 +463,7 @@ public class Player : MonoBehaviour
 
     public void SwitchState(PlayerState newState)
     {
-        Debug.Log($"=== SwitchState: {currentState.GetType().Name} -> {newState.GetType().Name} ===");
+        // Debug.Log($"=== SwitchState: {currentState.GetType().Name} -> {newState.GetType().Name} ===");
         currentState.Exit();
         previousState = currentState;
         currentState = newState;
@@ -556,7 +556,7 @@ public class Player : MonoBehaviour
         Vector2 direction = Vector2.left;
         RaycastHit2D hit = Physics2D.Raycast(origin, direction, wallRaycastLength, groundMask);
         Debug.DrawRay(origin, direction * wallRaycastLength, hit.collider != null ? Color.green : Color.red);
-        Debug.Log($"Hit = {hit.collider != null}");
+        // Debug.Log($"Hit = {hit.collider != null}");
         return hit.collider != null;
     }
     public bool CheckWallR()
@@ -575,7 +575,7 @@ public class Player : MonoBehaviour
 
         float apexTime = apexFrames / PhysicsFPS;
 
-        Debug.Log($"Calculated Gravity: {(2f * jumpHeight) / (apexTime * apexTime)}");
+        // Debug.Log($"Calculated Gravity: {(2f * jumpHeight) / (apexTime * apexTime)}");
         return (2f * jumpHeight) / (apexTime * apexTime);
     }
 
