@@ -35,6 +35,8 @@ public class PlayerJumpState : PlayerAirState
             player.jumpVelocity);
 
         player.isGrounded = false;
+        // Der Tastendruck ist mit diesem Sprung verbraucht (sonst löst er an einer Wand sofort noch einen Wandsprung aus)
+        player.jumpBuffer.Consume();
 
         takeoffY = player.rb.position.y;
         framesSinceTakeoff = 0;
@@ -141,11 +143,14 @@ public class PlayerJumpState : PlayerAirState
         }
 
    
+        if (player.TryWallJump())
+            return;
+
         if (player.rb.linearVelocity.y <= 0)
             player.SwitchState(player.fallState);
 
 
-        else if (player.wallMechanicsEnabled && (player.CheckWallL() || player.CheckWallR()))
+        else if (player.WallSlideActive && (player.CheckWallL() || player.CheckWallR()))
             player.SwitchState(player.wallSlideState);
 
 

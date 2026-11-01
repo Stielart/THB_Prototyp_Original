@@ -56,7 +56,11 @@ public class PlayerFallState : PlayerAirState
             player.SwitchState(player.jumpState);
             player.coyoteTimer.Consume();
         }
-        if (player.wallMechanicsEnabled && time > 0.2f && (player.CheckWallL() || player.CheckWallR()))
+        else if (player.TryWallJump())
+        {
+            return;
+        }
+        if (player.WallSlideActive && time > 0.2f && (player.CheckWallL() || player.CheckWallR()))
             player.SwitchState(player.wallSlideFallState);
 
 

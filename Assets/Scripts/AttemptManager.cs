@@ -12,6 +12,12 @@ public class AttemptManager : MonoBehaviour
 {
     public static AttemptManager Instance { get; private set; }
 
+    /// <summary>Wird ausgelöst, nachdem die Figur nach einem Tod zurückgesetzt wurde (z. B. damit Gegner zurückkehren).</summary>
+    public static event System.Action Respawned;
+
+    /// <summary>Wird ausgelöst, wenn die Figur einen neuen Checkpoint erreicht (z. B. damit Früchte als gesichert gelten).</summary>
+    public static event System.Action CheckpointReached;
+
     /// <summary>Aktueller Versuch (beginnt bei 1).</summary>
     public int Attempts { get; private set; } = 1;
 
@@ -57,6 +63,7 @@ public class AttemptManager : MonoBehaviour
             activeCheckpoint.SetActiveVisual(false);
         activeCheckpoint = checkpoint;
         activeCheckpoint.SetActiveVisual(true);
+        CheckpointReached?.Invoke();
     }
 
     /// <summary>Beendet den Versuch: zählt hoch, hält die Figur an und setzt sie nach der Pause zurück.</summary>
@@ -79,6 +86,7 @@ public class AttemptManager : MonoBehaviour
         Vector2 point = activeCheckpoint != null ? activeCheckpoint.RespawnPosition : spawnPoint;
         target.RespawnAt(point);
         respawning = false;
+        Respawned?.Invoke();
     }
 
     private void OnGUI()

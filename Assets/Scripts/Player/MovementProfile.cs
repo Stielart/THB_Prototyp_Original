@@ -100,6 +100,23 @@ public class MovementProfile
     [Tooltip("Abschussgeschwindigkeit bei voller Ladung, als Faktor auf die Höchstgeschwindigkeit")]
     public float spinDashMaxSpeedFactor = 1.5f;
 
+    // ---------- Wand (Zusatzfaktor für das Momentum; nur beim einfachen Wandsprung, Taste V) ----------
+
+    [Tooltip("Wandsprung in diesem Profil möglich")]
+    public bool wallJump = true;
+
+    [Tooltip("Wandrutschen in diesem Profil (der bisherige Slide: Hochlaufen, kurzes Haften, Abrutschen). Beim alten Wandsprung gilt der Slide immer. Aus: kein Slide, der Wandsprung geht trotzdem bei Wandkontakt in der Luft")]
+    public bool wallSlide = true;
+
+    [Tooltip("Winkel des Wandsprungs in Grad, von der Wand aus gemessen: 0 = senkrecht an der Wand hoch, 90 = waagerecht von der Wand weg")]
+    [Range(0f, 90f)] public float wallJumpAngle = 51f;
+
+    [Tooltip("Absprunggeschwindigkeit (Betrag) in Spielpixeln pro Sekunde. Sie wird nach dem Winkel in waagerecht und senkrecht zerlegt")]
+    public float wallJumpSpeed = 167f;
+
+    [Tooltip("Frames nach dem Wandsprung, in denen die Figur nicht steuerbar ist (die Geschwindigkeit bleibt konstant). Verhindert, dass man an derselben Wand sofort wieder abspringt")]
+    public int wallJumpLockFrames = 10;
+
     /// <summary>
     /// Startwerte aus der Analyse (Tabelle vergleich, Kapitel 5), unter der Annahme einer
     /// linearen Rampe (Beschleunigung = Höchstgeschwindigkeit / Zeit). Werden im Messmodus geprüft.
@@ -121,7 +138,9 @@ public class MovementProfile
                 jumpHeightFigures = 2.3f, apexFrames = 19.5f, speedJumpBonus = false,
                 jumpCut = true, jumpCutSpeedFraction = 0.27f,
                 apexHangMultiplier = 0.5f, apexHangSpeed = 40f,
-                fallGravityMultiplier = 1f, holdFallGravity = false
+                fallGravityMultiplier = 1f, holdFallGravity = false,
+                // Wandsprung nach Celeste: waagerecht 130, senkrecht 105 Spielpixel/s (Quelltext, am Original prüfen) = 167 bei 51 Grad, 0,16 s (10 Frames) keine Steuerung
+                wallJump = true, wallSlide = true, wallJumpAngle = 51f, wallJumpSpeed = 167f, wallJumpLockFrames = 10
             },
             // Super Mario World (Rennen): ca. 22 Frames Beschleunigung, 37 Frames Auslaufen, 5 Frames Bremsen.
             // Sprung 2,9 bis 3,4 Figurenhöhen (mit Tempo), Flugdauer lang 52 Frames. Gravitation 0,1875 bei gehaltener Taste
@@ -136,7 +155,10 @@ public class MovementProfile
                 jumpHeightFigures = 2.9f, apexFrames = 26f, speedJumpBonus = true,
                 jumpCut = true, jumpCutSpeedFraction = 0.27f,
                 apexHangMultiplier = 1f,
-                fallGravityMultiplier = 2f, holdFallGravity = true, holdFallGravityFactor = 0.5f
+                fallGravityMultiplier = 2f, holdFallGravity = true, holdFallGravityFactor = 0.5f,
+                // Wandsprung: Eigene Wahl (Super Mario World hat keinen Wandsprung), angelehnt an New Super Mario Bros.:
+                // steiler Winkel, senkrechte Geschwindigkeit etwa 90 % des Absprungs, waagerecht etwas über der Lauftaste
+                wallJump = true, wallSlide = true, wallJumpAngle = 35f, wallJumpSpeed = 280f, wallJumpLockFrames = 8
             },
             // Sonic Mania: ca. 127 Frames Beschleunigung, 117 Frames Auslaufen, 10 Frames Bremsen.
             // Sprung 2,7 Figurenhöhen, Flugdauer lang 63 Frames, Gravitation konstant. Genau zwei Höhen (2,7 und 1,7):
@@ -155,7 +177,9 @@ public class MovementProfile
                 apexHangMultiplier = 1f,
                 fallGravityMultiplier = 1f, holdFallGravity = false,
                 // Spin Dash: verkürzt den langen Beschleunigungsaufbau (Sonic: Rolle am Boden). Zusatz des Prototyps, nicht in der Anforderungsliste.
-                spinDash = true, spinDashPressesForFull = 3, spinDashMinSpeedFactor = 1.0f, spinDashMaxSpeedFactor = 1.5f
+                spinDash = true, spinDashPressesForFull = 3, spinDashMinSpeedFactor = 1.0f, spinDashMaxSpeedFactor = 1.5f,
+                // Wandsprung: Eigene Wahl (Sonic Mania hat keinen Wandsprung): senkrecht etwa 90 % des Absprungs, waagerecht knapp unter der Höchstgeschwindigkeit, längere Sperre wegen des höheren Tempos
+                wallJump = true, wallSlide = true, wallJumpAngle = 40f, wallJumpSpeed = 480f, wallJumpLockFrames = 12
             }
         };
     }

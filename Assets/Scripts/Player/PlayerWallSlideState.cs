@@ -120,7 +120,14 @@ public class PlayerWallSlideState : PlayerAirState
         if (wallCheck != 0)
         {
             player.turningLocked = false;
-            player.SwitchState(player.wallJumpState);
+            if (player.simpleWallJump)
+            {
+                // Einfacher Wandsprung (Taste V): nur wenn Wand und Profil ihn erlauben
+                if (player.SimpleWallJumpAvailable)
+                    player.StartSimpleWallJump();
+            }
+            else
+                player.SwitchState(player.wallJumpState);
         }
     }
 

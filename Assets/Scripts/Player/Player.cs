@@ -30,6 +30,7 @@ public class Player : MonoBehaviour
     public PlayerWallJumpState wallJumpState;
 
     public PlayerWallSlideFallState wallSlideFallState;
+    public PlayerWallJumpSimpleState wallJumpSimpleState;
 
     // === INPUT (public, damit States zugreifen können) ===
     public float xInput;
@@ -239,6 +240,38 @@ public class Player : MonoBehaviour
     /// <summary>Faktor, mit dem Stacheln ihre Hitbox gegenüber der Grafik verkleinern (1, wenn die Toleranz aus ist).</summary>
     public float HitboxScale => hitboxToleranceEnabled ? hitboxToleranceScale : 1f;
 
+    [Header("Stomp (Gegner)")]
+    [Tooltip("Höhe der Fußbox in Einheiten, gemessen von der Unterkante des Colliders nach oben")]
+    public float stompBoxHeight = 0.4f;
+    [Tooltip("Wie weit die Fußbox unter den Collider hinausreicht (Einheiten)")]
+    public float stompBoxReach = 0.1f;
+
+    /// <summary>Hitbox der ganzen Figur (Collider).</summary>
+    public Bounds BodyBounds => (bc != null ? bc : GetComponent<BoxCollider2D>()).bounds;
+
+    /// <summary>Fußbox: schmaler Streifen am unteren Rand des Colliders, mit dem die Figur auf Gegner springt.</summary>
+    public Bounds FeetBounds
+    {
+        get
+        {
+            Bounds b = BodyBounds;
+            float bottom = b.min.y - stompBoxReach;
+            float top = b.min.y + stompBoxHeight;
+            return new Bounds(new Vector3(b.center.x, (top + bottom) * 0.5f, 0f), new Vector3(b.size.x, top - bottom, 1f));
+        }
+    }
+
+    /// <summary>
+    /// Die Figur ist auf einen Gegner gesprungen: Sie springt sofort wieder ab, mit den Sprungwerten des aktiven Profils
+    /// (Taste gehalten = volle Höhe, losgelassen = kurzer Sprung, genau wie bei einem normalen Sprung).
+    /// </summary>
+    public void Stomp()
+    {
+        jumpBuffer.Consume();
+        coyoteTimer.Consume();
+        SwitchState(jumpState);
+    }
+
     /// <summary>Versetzt die Figur in den "getroffen"-Zustand (unsichtbar, Physik und Eingabe aus) oder zurück.</summary>
     public void SetDead(bool dead)
     {
@@ -318,6 +351,45 @@ public class Player : MonoBehaviour
     [Header("Wandmechanik (Taste 8)")]
     [Tooltip("Wandrutschen und Wandsprung. Ausgeschaltet bleibt die Figur an Wänden im normalen Sprung- oder Fall-Zustand (zum Testen der Ledge Correction)")]
     public bool wallMechanicsEnabled = true;
+
+    [Header("Wandsprung (Taste V)")]
+    [Tooltip("Einfacher Wandsprung (fester Winkel, Geschwindigkeit und Sperrzeit aus dem Profil) statt des alten, kurvenbasierten Wandsprungs")]
+    public bool simpleWallJump = true;
+
+    /// <summary>Wandrutschen (Slide-Zustände) ist aktiv: Beim alten Wandsprung immer, beim einfachen nach dem Haken im Profil.</summary>
+    public bool WallSlideActive => wallMechanicsEnabled && (!simpleWallJump || ActiveProfile.wallSlide);
+
+    /// <summary>Der einfache Wandsprung ist eingeschaltet und im aktiven Profil erlaubt.</summary>
+    public bool SimpleWallJumpAvailable => wallMechanicsEnabled && simpleWallJump && ActiveProfile.wallJump;
+
+    /// <summary>
+    /// Führt den einfachen Wandsprung aus, wenn die Figur in der Luft an einer Wand ist und die Sprungtaste gedrückt wurde
+    /// (Jump Buffer). Gibt zurück, ob gesprungen wurde.
+    /// </summary>
+    public bool TryWallJump()
+    {
+        if (!SimpleWallJumpAvailable || isGrounded || !jumpBuffer.IsActive || CheckWallSite() == 0f)
+            return false;
+        StartSimpleWallJump();
+        return true;
+    }
+
+    /// <summary>Startet den einfachen Wandsprung und verbraucht den Tastendruck.</summary>
+    public void StartSimpleWallJump()
+    {
+        jumpBuffer.Consume();
+        coyoteTimer.Consume();
+        SwitchState(wallJumpSimpleState);
+    }
+
+    private string WallJumpHudText()
+    {
+        if (!wallMechanicsEnabled) return "aus";
+        if (!simpleWallJump) return "alt";
+        MovementProfile p = ActiveProfile;
+        if (!p.wallJump) return "aus (Profil)";
+        return $"einfach {p.wallJumpAngle:F0} Grad, Sperre {p.wallJumpLockFrames} Fr., Slide {(p.wallSlide ? "an" : "aus")}";
+    }
 
     /// <summary>Wirksame Coyote-Dauer in Frames (0, wenn ausgeschaltet).</summary>
     public int CoyoteFrames => coyoteEnabled ? Mathf.Max(0, coyoteFrames) : 0;
@@ -424,6 +496,7 @@ public class Player : MonoBehaviour
         wallSlideState = gameObject.AddComponent<PlayerWallSlideState>();
         wallJumpState = gameObject.AddComponent<PlayerWallJumpState>();
         wallSlideFallState = gameObject.AddComponent<PlayerWallSlideFallState>();
+        wallJumpSimpleState = gameObject.AddComponent<PlayerWallJumpSimpleState>();
 
         #endregion
 
@@ -437,11 +510,15 @@ public class Player : MonoBehaviour
         wallSlideState.Initialize(this);
         wallJumpState.Initialize(this);
         wallSlideFallState.Initialize(this);
+        wallJumpSimpleState.Initialize(this);
 
         #endregion
 
-        // Messmodus (Taste M), siehe MeasurementRecorder
+        // Messmodus (Taste M), siehe MeasurementRecorder. Nur im Editor: Er schreibt Dateien, die im Browser-Build nicht erlaubt sind,
+        // und gehört nicht in den Test für die Versuchspersonen.
+#if UNITY_EDITOR
         gameObject.AddComponent<MeasurementRecorder>().Initialize(this);
+#endif
 
         // Start-State setzen
         currentState = groundState;
@@ -589,6 +666,7 @@ public class Player : MonoBehaviour
         if (kb.digit7Key.wasPressedThisFrame) cornerCorrectionEnabled = !cornerCorrectionEnabled;
         if (kb.digit8Key.wasPressedThisFrame) wallMechanicsEnabled = !wallMechanicsEnabled;
         if (kb.digit9Key.wasPressedThisFrame) spinDashEnabled = !spinDashEnabled;
+        if (kb.vKey.wasPressedThisFrame) simpleWallJump = !simpleWallJump;
         if (kb.digit0Key.wasPressedThisFrame) hitboxToleranceEnabled = !hitboxToleranceEnabled;
         if (kb.tKey.wasPressedThisFrame)
         {
@@ -597,10 +675,12 @@ public class Player : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    // Debug-Anzeige (Profil, Toleranzen, Ledge-Prüfung). Nicht im Build für die Versuchspersonen.
     private void OnGUI()
     {
         GUI.Label(new Rect(10, 10, 1900, 24),
-            $"Profil [1-3]: {ActiveProfile.name} (Skalierung x{profileScale:F2})   |   Aktives Bremsen [B]: {(activeBrakingEnabled ? "an" : "aus")}   |   Wandrutschen und Wandsprung [8]: {(wallMechanicsEnabled ? "an" : "aus")}   |   Spin Dash [9]: {SpinDashHudText()}");
+            $"Profil [1-3]: {ActiveProfile.name} (Skalierung x{profileScale:F2})   |   Aktives Bremsen [B]: {(activeBrakingEnabled ? "an" : "aus")}   |   Wand [8]: {(wallMechanicsEnabled ? "an" : "aus")}   |   Wandsprung [V]: {WallJumpHudText()}   |   Spin Dash [9]: {SpinDashHudText()}");
         GUI.Label(new Rect(10, 30, 1900, 24),
             $"Toleranz [T = alle]: Coyote [4] {(coyoteEnabled ? coyoteFrames + " Fr." : "aus")}   |   Buffer [5] {(jumpBufferEnabled ? jumpBufferFrames + " Fr." : "aus")}"
             + $"   |   Ledge [6] {(ledgeCorrectionEnabled ? ledgeCorrectionPixels + " px" : "aus")}   |   Corner [7] {(cornerCorrectionEnabled ? "an" : "aus")}   |   Stachel-Hitbox [0] {Mathf.RoundToInt(HitboxScale * 100f)} % der Grafik");
@@ -613,10 +693,15 @@ public class Player : MonoBehaviour
             GUI.Label(new Rect(10, 50, 1900, 24), "Ledge-Prüfung: " + status);
         }
     }
+#endif
 
     void Update()
     {
+        // Testtasten (Profil, Toleranzen, Wandmechanik ...) gibt es nur im Editor und in Entwicklungs-Builds.
+        // Im Build für die Versuchspersonen wählt später die Versuchslogik (Bedingungscode) die Einstellungen aus.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         HandleProfileHotkeys();
+#endif
         if (isDead)
             return;
 
@@ -756,6 +841,11 @@ public class Player : MonoBehaviour
        // Gizmos.DrawLine(ceilingCheckR.position, ceilingCheckR.position + Vector3.up * ceilingRaycastLength);
 
         DrawLedgeGizmos();
+
+        // Fußbox für den Stomp (cyan)
+        Gizmos.color = Color.cyan;
+        Bounds feet = FeetBounds;
+        Gizmos.DrawWireCube(feet.center, new Vector3(feet.size.x, feet.size.y, 0f));
     }
 
 

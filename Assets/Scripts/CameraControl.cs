@@ -27,6 +27,22 @@ public class CameraControl : MonoBehaviour
     [SerializeField] public float deadZoneRightThreshold = 3f;
     [SerializeField] public float deadZoneLeftThreshold = 3f;
 
+    [Header("Vertikale Dead Zone (wie die horizontale: Solange die Figur im Kasten bleibt, bewegt sich die Kamera nicht)")]
+    [Tooltip("Wie weit die Figur über die Kastenmitte steigen darf, bevor die Kamera nach oben folgt")]
+    [SerializeField] public float deadZoneUpThreshold = 3f;
+    [Tooltip("Wie weit die Figur unter die Kastenmitte fallen darf, bevor die Kamera nach unten folgt")]
+    [SerializeField] public float deadZoneDownThreshold = 2f;
+    [Tooltip("Glättung der senkrechten Kamerabewegung in Sekunden (siehe CameraAncle). Größer = träger")]
+    [SerializeField] public float verticalSmoothTime = 0.12f;
+
+    [Header("Blick nach unten beim Fallen")]
+    [Tooltip("So lange (in Sekunden) muss die Figur gefallen sein, bevor die Kamera nach unten blickt. Kurze Absätze bewegen die Kamera nicht")]
+    [SerializeField] private float lookDownDelay = 0.25f;
+    [Tooltip("Dauer des Wechsels in den Blick nach unten (Sekunden)")]
+    [SerializeField] private float lookDownDuration = 0.4f;
+    [Tooltip("Dauer der Rückkehr in die Mitte nach der Landung (Sekunden)")]
+    [SerializeField] private float returnDuration = 0.8f;
+
 
     private float currentOffsetX = 0;
     private float currentOffsetY = 0;
@@ -42,7 +58,8 @@ public class CameraControl : MonoBehaviour
     private float transitionStartTimeY;
 
     private const float transitionDurationX = 0.4f;
-    private const float transitionDurationY = 0.4f;
+    private float transitionDurationY = 0.4f;
+    private float fallTime;
 
     public bool isXFrozen = false;
 
@@ -53,10 +70,12 @@ public class CameraControl : MonoBehaviour
 
     private PlayerState previousState;
     public float deadZoneX;
+    public float deadZoneY;
    
     void Awake()
     {
         deadZoneX = player.transform.position.x;
+        deadZoneY = player.transform.position.y;
 
 
         currentState = player.currentState;
@@ -168,9 +187,13 @@ public class CameraControl : MonoBehaviour
 
         bool isFallingOrWallFalling = currentState == player.fallState || currentState == player.wallSlideFallState;
         bool isWallSliding = currentState == player.wallSlideState;
+        // Fallzeit mitzählen: Erst nach lookDownDelay blickt die Kamera nach unten (kurze Absätze lösen nichts aus)
+        fallTime = isFallingOrWallFalling ? fallTime + Time.deltaTime : 0f;
+
         if (isFallingOrWallFalling)
         {
-            targetY = downOffsetYValue;
+            if (fallTime >= lookDownDelay)
+                targetY = downOffsetYValue;
         }
         else if(currentState == player.groundState)
         {
@@ -196,8 +219,20 @@ public class CameraControl : MonoBehaviour
 
     
 
+    void UpdateBoxPositionY()
+    {
+        // Senkrechter Kasten: Die Kamera folgt erst, wenn die Figur ihn oben oder unten verlässt. Der Kasten wird dann mitgeschoben.
+        float distanceY = player.transform.position.y - deadZoneY;
+
+        if (distanceY > deadZoneUpThreshold)
+            deadZoneY = player.transform.position.y - deadZoneUpThreshold;
+        else if (distanceY < -deadZoneDownThreshold)
+            deadZoneY = player.transform.position.y + deadZoneDownThreshold;
+    }
+
     void UpdateBoxPosition()
     {
+        UpdateBoxPositionY(); // gilt auch, wenn X eingefroren ist
 
         if (isXFrozen) return;
         distanceFromBoxCenter = player.transform.position.x - deadZoneX;
@@ -211,7 +246,7 @@ public class CameraControl : MonoBehaviour
     void StartTransitionX(float newTargetX)
     {
         transitionStartX = currentOffsetX; // "wo bin ich JETZT" wird als neuer Ausgangspunkt festgehalten
-        transitionStartY = currentOffsetY; // "wo bin ich JETZT" wird als neuer Ausgangspunkt festgehalten
+        // (Hier stand früher auch transitionStartY = currentOffsetY: Das setzte die Y-Übergänge mitten im Ablauf zurück und ließ die Kamera springen, sobald sich X-Ziel änderte.)
         transitionStartTimeX = Time.time;    // "JETZT" als Startzeitpunkt merken
         targetX = newTargetX;               // das eigentliche Ziel setzen
                     // das eigentliche Ziel setzen
@@ -222,6 +257,8 @@ public class CameraControl : MonoBehaviour
         transitionStartY = currentOffsetY; // "wo bin ich JETZT" wird als neuer Ausgangspunkt festgehalten
         transitionStartTimeY = Time.time;    // "JETZT" als Startzeitpunkt merken
         targetY = newTargetY;               // das eigentliche Ziel setzen
+        // Blick nach unten schnell, Rückkehr (Landung, Wandrutschen) langsamer
+        transitionDurationY = newTargetY < currentOffsetY ? lookDownDuration : returnDuration;
     }
 
     void UpdateTransitionX()
@@ -238,10 +275,8 @@ public class CameraControl : MonoBehaviour
     {
         float elapsedY = Time.time - transitionStartTimeY; // wie viele Sekunden sind seit dem Start vergangen?
         float progressY = Mathf.Clamp01(elapsedY / transitionDurationY); // als Prozentsatz (0 bis 1) der Gesamtdauer
-        if (currentState != player.groundState)
-            currentOffsetY = Mathf.Lerp(transitionStartY, targetY, progressY);
-        else
-            currentOffsetY = 0f;
+        // Kein Sprung mehr bei der Landung: Auch am Boden gleitet der Versatz weich zurück auf 0 (Ziel wird in UpdateTargetY gesetzt)
+        currentOffsetY = Mathf.Lerp(transitionStartY, targetY, Mathf.SmoothStep(0f, 1f, progressY));
     }
 
     public void FreezeXAt(float worldX)
@@ -276,6 +311,11 @@ public class CameraControl : MonoBehaviour
         Vector3 rightThresholdPos = new Vector3(deadZoneX + deadZoneRightThreshold, transform.position.y - 1f, 0);
         Vector3 rightThresholdPosTop = new Vector3(deadZoneX + deadZoneRightThreshold, transform.position.y + 1f, 0);
         Gizmos.DrawLine(rightThresholdPos, rightThresholdPosTop);
+
+        // Senkrechter Kasten (gelbe Linien: oben und unten)
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(new Vector3(deadZoneX - 1f, deadZoneY + deadZoneUpThreshold, 0), new Vector3(deadZoneX + 1f, deadZoneY + deadZoneUpThreshold, 0));
+        Gizmos.DrawLine(new Vector3(deadZoneX - 1f, deadZoneY - deadZoneDownThreshold, 0), new Vector3(deadZoneX + 1f, deadZoneY - deadZoneDownThreshold, 0));
 
         // Linke Schwelle (blaue Linie)
         Gizmos.color = Color.blue;

@@ -63,6 +63,14 @@ public class PlayerWallSlideFallState : PlayerAirState
 
     private void OnJumpPressed(InputAction.CallbackContext ctx)
     {
+        if (player.simpleWallJump)
+        {
+            // Einfacher Wandsprung (Taste V)
+            if (player.CheckWallSite() != 0 && player.SimpleWallJumpAvailable)
+                player.StartSimpleWallJump();
+            return;
+        }
+
         if (player.CheckWallSite() != 0)
         {
             float boostX = player.wallJumpSpeedXUnit * player.CheckWallSite();

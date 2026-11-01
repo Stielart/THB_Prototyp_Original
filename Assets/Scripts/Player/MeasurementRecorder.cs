@@ -1,3 +1,4 @@
+#if UNITY_EDITOR // Nur im Editor: schreibt Dateien (nicht im Browser-Build erlaubt) und ist ein Prüfwerkzeug, kein Teil des Tests
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -337,3 +338,4 @@ public class MeasurementRecorder : MonoBehaviour
             GUI.Label(new Rect(10, 96 + i * 20, 1200, 22), messages[i]);
     }
 }
+#endif
