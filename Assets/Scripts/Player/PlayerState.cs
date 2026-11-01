@@ -45,9 +45,23 @@ public abstract class PlayerState : MonoBehaviour
     public virtual void Do() { }
 
 
-    protected void HandleHorizontalMovement(float acceleration, float deceleration, float turnDeceleration, bool ignoreInput = false)
+    protected void HandleHorizontalMovement(float acceleration, float deceleration, float turnDeceleration, bool ignoreInput = false, bool allowActiveBrake = true)
     {
         float effectiveInput = ignoreInput ? 0f : player.xInput;
+
+        // Wand in Bewegungsrichtung: currentSpeed auf 0 setzen. currentSpeed ist ein gespeicherter Wert, die Physik
+        // blockiert die Figur an der Wand, baut den Wert aber nicht ab. Ohne diese Zeilen "schiebt" das gespeicherte Tempo
+        // beim Sprung über die Kante plötzlich nach vorn und der Sprung wird höher (Geschwindigkeitsbonus).
+        // Die ursprüngliche Geschwindigkeit wird kurz gemerkt, damit die Ledge Correction sie beibehalten kann.
+        if ((player.currentSpeed > 0f && player.CheckWallR()) || (player.currentSpeed < 0f && player.CheckWallL()))
+        {
+            if (Time.time - player.wallStoppedTime > 0.1f)
+            {
+                player.wallStoppedSpeed = player.currentSpeed;
+                player.wallStoppedTime = Time.time;
+            }
+            player.currentSpeed = 0f;
+        }
 
         float targetSpeed = 0f;
         float rateToUse;
@@ -83,11 +97,19 @@ public abstract class PlayerState : MonoBehaviour
                 player.isTurningAround = false;
             }
         }
-        else
+        else if (allowActiveBrake)
         {
             // Opposite direction → decelerate quickly
             player.isTurningAround = true;
             rateToUse = turnDeceleration;
+        }
+        else
+        {
+            // Aktives Bremsen aus: Gegenrichtung wirkt wie "Taste loslassen" (nur passives Auslaufen).
+            // Erst bei Stillstand greift der Zweig oben (Beschleunigung in die neue Richtung).
+            targetSpeed = 0f;
+            rateToUse = deceleration;
+            player.isTurningAround = false;
         }
 
         // Step towards the target speed

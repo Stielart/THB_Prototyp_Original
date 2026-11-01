@@ -677,6 +677,90 @@ MonoBehaviour:
   apexAnimationFinished: 0
   fallAnimationFinished: 0
   turningLocked: 0
+  profiles:
+  - name: Direkt
+    figureHeight: 11.9
+    walkSpeed: 90
+    runSpeed: 90
+    acceleration: 1080
+    passiveDeceleration: 1080
+    activeBraking: 1080
+    airAccelerationMultiplier: 0.6
+    airDecelerationMultiplier: 0.05
+    airTurnMultiplier: 0.6
+    jumpHeightFigures: 2.3
+    apexFrames: 19.5
+    speedJumpBonus: 0
+    jumpCut: 1
+    jumpCutSpeedFraction: 0.27
+    twoStageJump: 0
+    shortJumpHeightFigures: 1.7
+    twoStageWindowFrames: 11
+    apexHangMultiplier: 0.5
+    apexHangSpeed: 40
+    fallGravityMultiplier: 1
+    holdFallGravity: 0
+    holdFallGravityFactor: 0.47
+    spinDash: 0
+    spinDashPressesForFull: 3
+    spinDashMinSpeedFactor: 1
+    spinDashMaxSpeedFactor: 1.5
+  - name: Mittel
+    figureHeight: 19
+    walkSpeed: 75
+    runSpeed: 135
+    acceleration: 368
+    passiveDeceleration: 219
+    activeBraking: 1620
+    airAccelerationMultiplier: 1
+    airDecelerationMultiplier: 0.05
+    airTurnMultiplier: 0.67
+    jumpHeightFigures: 2.9
+    apexFrames: 26
+    speedJumpBonus: 1
+    jumpCut: 1
+    jumpCutSpeedFraction: 0.27
+    twoStageJump: 0
+    shortJumpHeightFigures: 1.7
+    twoStageWindowFrames: 11
+    apexHangMultiplier: 1
+    apexHangSpeed: 80
+    fallGravityMultiplier: 2
+    holdFallGravity: 1
+    holdFallGravityFactor: 0.5
+    spinDash: 0
+    spinDashPressesForFull: 3
+    spinDashMinSpeedFactor: 1
+    spinDashMaxSpeedFactor: 1.5
+  - name: Momentum
+    figureHeight: 39.7
+    walkSpeed: 360
+    runSpeed: 360
+    acceleration: 170
+    passiveDeceleration: 185
+    activeBraking: 2160
+    airAccelerationMultiplier: 2
+    airDecelerationMultiplier: 0.05
+    airTurnMultiplier: 0.275
+    jumpHeightFigures: 2.7
+    apexFrames: 31.5
+    speedJumpBonus: 0
+    jumpCut: 1
+    jumpCutSpeedFraction: 0.66
+    twoStageJump: 1
+    shortJumpHeightFigures: 1.7
+    twoStageWindowFrames: 11
+    apexHangMultiplier: 1
+    apexHangSpeed: 80
+    fallGravityMultiplier: 1
+    holdFallGravity: 0
+    holdFallGravityFactor: 0.47
+    spinDash: 1
+    spinDashPressesForFull: 3
+    spinDashMinSpeedFactor: 1
+    spinDashMaxSpeedFactor: 1.5
+  activeProfileIndex: 1
+  activeBrakingEnabled: 1
   pixelWalkSpeed: 95
   pixelRunSpeed: 255
   pixelWalkAcceleration: 380
@@ -732,11 +816,27 @@ MonoBehaviour:
   apexHangMultiplier: 0.15
   apexHangRange: 8
   apexHangMinTime: 0.15
-  coyoteTimeDuration: 0.1
+  coyoteEnabled: 1
+  coyoteFrames: 6
+  jumpBufferEnabled: 1
+  jumpBufferFrames: 9
+  ledgeCorrectionEnabled: 1
+  ledgeCorrectionPixels: 8
+  cornerCorrectionEnabled: 1
+  hitboxToleranceEnabled: 1
+  hitboxToleranceScale: 0.6
+  respawnDelayFrames: 24
+  isDead: 0
+  spinDashEnabled: 1
+  spinDashChargeColor: {r: 1, g: 0.7, b: 0.2, a: 1}
+  spinDashReadyColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  spinDashCharging: 0
+  spinDashPresses: 0
+  wallMechanicsEnabled: 1
   jumpBuffer:
-    timer: 0
+    framesLeft: 0
   coyoteTimer:
-    timer: 0
+    framesLeft: 0
   stickTimer:
     timer: 0
   airAccelerationUnit: 0
@@ -749,6 +849,8 @@ MonoBehaviour:
   wallSlideFallGravityMod: 0.5
   currentGravity: 1
   currentSpeed: 0
+  wallStoppedSpeed: 0
+  wallStoppedTime: -10
   currentJumpVelocity: 0
   currentDeceleration: 0
   currentTurnDeceleration: 0
@@ -759,6 +861,7 @@ MonoBehaviour:
   wallCheckOffsetR: {x: 0, y: 0}
   wallCheckOffsetL: {x: 0, y: 0}
   groundRaycastLength: 0.1
+  groundRayEdgeInset: 0.05
   wallRaycastLength: 0.65
   ceilingRaycastLength: 0.5
   groundMask:
@@ -7591,6 +7694,63 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1001 &868602065
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1200000000000000001, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_Name
+      value: Spike
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.6508732
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.4468346
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1200000000000000002, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4db4b0ec83f54951986ba2e461a671f4, type: 3}
 --- !u!1 &887485350
 GameObject:
   m_ObjectHideFlags: 0
@@ -8166,6 +8326,63 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &2039709775
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1100000000000000001, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_Name
+      value: Checkpoint
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 8.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1100000000000000011, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 57f1cd2958cb41a08822806de6cbd512, type: 3}
 --- !u!1 &2108569648
 GameObject:
   m_ObjectHideFlags: 0
@@ -8212,3 +8429,5 @@ SceneRoots:
   - {fileID: 887485353}
   - {fileID: 1800396203}
   - {fileID: 1354218517}
+  - {fileID: 2039709775}
+  - {fileID: 868602065}

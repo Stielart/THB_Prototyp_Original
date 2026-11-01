@@ -33,16 +33,17 @@ public class PlayerFallState : PlayerAirState
     override public void FixedDo()
     {
         base.FixedDo();
-        if (player.isHoldingJump)
+        player.TryLedgeCorrection();
+        if (player.isHoldingJump && player.ActiveProfile.holdFallGravity)
         {
-            //0.7f is a multiplier to reduce gravity. Should be adjusted as a variable in the future.
-            player.currentGravity = Mathf.Lerp(player.currentGravity, player.jumpGravityUnit * 0.7f, 0.9f);
+            // Gravitation bei gehaltener Taste: Fallgravitation mal Faktor aus dem Profil (vorher fest 0,7 x Sprunggravitation)
+            player.currentGravity = Mathf.Lerp(player.currentGravity, Gravity * player.ActiveProfile.holdFallGravityFactor, 0.9f);
             rb.linearVelocity -= Vector2.up * player.currentGravity * Time.fixedDeltaTime;
             if(rb.linearVelocity.y < -HoldMaxFallSpeed)
             ClampFallSpeed(HoldMaxFallSpeed);
             //Debug.Log("Falling with jump held, currentGravity: " + player.currentGravity);
         }
-        else if(!player.isHoldingJump) 
+        else
         {
             player.currentGravity = Mathf.Lerp(player.currentGravity, Gravity, 0.9f);
             rb.linearVelocity -= Vector2.up * player.currentGravity * Time.fixedDeltaTime;
@@ -55,7 +56,7 @@ public class PlayerFallState : PlayerAirState
             player.SwitchState(player.jumpState);
             player.coyoteTimer.Consume();
         }
-        if (time > 0.2f && (player.CheckWallL() || player.CheckWallR()))
+        if (player.wallMechanicsEnabled && time > 0.2f && (player.CheckWallL() || player.CheckWallR()))
             player.SwitchState(player.wallSlideFallState);
 
 
