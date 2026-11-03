@@ -480,6 +480,7 @@ public class Player : MonoBehaviour
         figureHeightPx = bc.size.y * Mathf.Abs(transform.lossyScale.y) * PixelsPerUnit;
         anim = GetComponent<Animator>();
         playerInput = new PlayerInput();
+        KeyboardInput.AddTo(playerInput); // Tastatur-Belegung zusätzlich zum Controller (F8)
 
         rb.bodyType = RigidbodyType2D.Dynamic;
         rb.gravityScale = 0;

@@ -18,6 +18,10 @@ public class PlayerJumpState : PlayerAirState
     public override void Enter()
     {
         player.anim.Play("Jump"); 
+
+        // Beim Absprung gilt die Luft-Wendeverzögerung. Sie wurde sonst nur in PlayerAirState.Enter gesetzt, das dieser State nicht aufruft.
+        // Beim ersten Sprung nach dem Laden der Szene stand der Wert deshalb auf 0, und die Figur konnte in der Luft nicht gegenlenken.
+        player.currentTurnDeceleration = player.airTurnDecelerationUnit;
         // Debug.Log("JumpState Enter");
 
         player.currentGravity = player.jumpGravityUnit;

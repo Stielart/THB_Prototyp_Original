@@ -28,8 +28,8 @@ public class CameraControl : MonoBehaviour
     [SerializeField] public float deadZoneLeftThreshold = 3f;
 
     [Header("Vertikale Dead Zone (wie die horizontale: Solange die Figur im Kasten bleibt, bewegt sich die Kamera nicht)")]
-    [Tooltip("Wie weit die Figur über die Kastenmitte steigen darf, bevor die Kamera nach oben folgt")]
-    [SerializeField] public float deadZoneUpThreshold = 3f;
+    [Tooltip("Wie weit die Figur über die Kastenmitte steigen darf, bevor die Kamera nach oben folgt. Kleiner = man sieht beim Sprung mehr von dem, was darüber liegt")]
+    [SerializeField] public float deadZoneUpThreshold = 1.5f;
     [Tooltip("Wie weit die Figur unter die Kastenmitte fallen darf, bevor die Kamera nach unten folgt")]
     [SerializeField] public float deadZoneDownThreshold = 2f;
     [Tooltip("Glättung der senkrechten Kamerabewegung in Sekunden (siehe CameraAncle). Größer = träger")]
@@ -43,6 +43,10 @@ public class CameraControl : MonoBehaviour
     [Tooltip("Dauer der Rückkehr in die Mitte nach der Landung (Sekunden)")]
     [SerializeField] private float returnDuration = 0.8f;
 
+
+    [Header("Start der Szene")]
+    [Tooltip("So viele Bilder lang wird die Kamera beim Start direkt auf ihr Ziel gesetzt (ohne Gleiten aus der alten Position)")]
+    [SerializeField] private int startSnapFrames = 3;
 
     private float currentOffsetX = 0;
     private float currentOffsetY = 0;
@@ -80,7 +84,40 @@ public class CameraControl : MonoBehaviour
 
         currentState = player.currentState;
         previousState = currentState;
+
+        StartCoroutine(SnapCameraAtStart());
     }
+
+    /// <summary>
+    /// Beim Start der Szene gleitet die Kamera sonst sichtbar von einer alten Position zur richtigen: Die Kamera (Cinemachine) liest die
+    /// Zielposition schon im ersten Bild, bevor CameraControl und CameraAncle sie gesetzt haben, und zieht dann mit ihrer Dämpfung nach.
+    /// Deshalb werden hier der Anker und das Ziel sofort auf die Startposition gesetzt, und die Kamera behält für die ersten Bilder
+    /// keinen alten Zustand (PreviousStateIsValid = false, Dämpfung des Confiners aus). Danach gelten wieder die Inspector-Werte.
+    /// </summary>
+    private System.Collections.IEnumerator SnapCameraAtStart()
+    {
+        Transform anchor = transform.parent;
+        if (anchor != null)
+            anchor.position = new Vector3(deadZoneX, deadZoneY, anchor.position.z);
+        transform.localPosition = new Vector2(currentOffsetX, currentOffsetY);
+
+        CinemachineCamera vcam = FindFirstObjectByType<CinemachineCamera>();
+        CinemachineConfiner2D confiner = FindFirstObjectByType<CinemachineConfiner2D>();
+        float originalDamping = confiner != null ? confiner.Damping : 0f;
+        if (confiner != null)
+            confiner.Damping = 0f;
+
+        for (int i = 0; i < startSnapFrames; i++)
+        {
+            if (vcam != null)
+                vcam.PreviousStateIsValid = false;
+            yield return null;
+        }
+
+        if (confiner != null)
+            confiner.Damping = originalDamping;
+    }
+
     void Start()
     {
         
