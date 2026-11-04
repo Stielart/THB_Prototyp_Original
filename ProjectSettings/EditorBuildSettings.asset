@@ -10,10 +10,16 @@ EditorBuildSettings:
     guid: 14f1eebe03d0add4796adaae7dfd7fd3
   - enabled: 1
     path: Assets/Scenes/Toleranz.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
+    guid: 22992dd299d375842a6d628237f504ee
   - enabled: 1
-    path: Assets/Scenes/Praezision.unity
+    path: Assets/Scenes/Praezision_Direkt.unity
     guid: a3d988a4ba1400949b9d9a1a9bec5de1
+  - enabled: 1
+    path: Assets/Scenes/Praezision_Mittel.unity
+    guid: 7b968094472ded74f8cb174fdd87515a
+  - enabled: 1
+    path: Assets/Scenes/Praezision_Momentum.unity
+    guid: 5480e53875d4d3c4c992f1ac2ec99ec9
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

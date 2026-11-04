@@ -25,14 +25,15 @@ public class PlayerJumpState : PlayerAirState
         // Debug.Log("JumpState Enter");
 
         player.currentGravity = player.jumpGravityUnit;
+        player.springLaunchActive = false;   // Player.SpringLaunch setzt es nach dem Wechsel in diesen Zustand wieder
 
         float heightBasedOnSpeed = player.CalculateSpeedBasedJumpHeight(player.currentSpeed, player.runMaxSpeedUnit);
 
-        player.jumpVelocity = player.CalculateJumpVelocity(
-            player.PixelsToUnits(heightBasedOnSpeed),
-            player.pixelApexFrames,
-            Player.PhysicsFPS
-        );
+        // Die Schwerkraft ist fest (aus der Basishöhe). Damit der Sprung genau die Höhe "Basis plus Tempo-Bonus" erreicht, wird die
+        // Absprunggeschwindigkeit daraus berechnet: v = Wurzel aus 2 * g * H. Bei der Basishöhe ergibt das dasselbe wie 2 * H / T.
+        // Vorher wurde v für die erhöhte Höhe bei gleicher Zenitzeit berechnet, die Schwerkraft blieb aber die der Basishöhe:
+        // Die Höhe wuchs dadurch mit dem Quadrat und der Bonus von 15 px wirkte wie etwa 32 px (gemessen 118,6 statt 105,6 px).
+        player.jumpVelocity = Mathf.Sqrt(2f * player.jumpGravityUnit * player.PixelsToUnits(heightBasedOnSpeed));
 
         player.rb.linearVelocity = new Vector2(
             player.rb.linearVelocity.x,
@@ -116,7 +117,11 @@ public class PlayerJumpState : PlayerAirState
         framesSinceTakeoff++;
         MovementProfile profile = player.ActiveProfile;
 
-        if (profile.twoStageJump)
+        if (player.springLaunchActive)
+        {
+            // Sprungfeder: Taste und Sprungabbruch wirken nicht, der Aufstieg endet nur durch die Gravitation
+        }
+        else if (profile.twoStageJump)
         {
             // Zwei feste Höhen: Nur ein Loslassen innerhalb des Fensters zählt (kurzer Sprung), danach hat die Taste keinen Einfluss mehr.
             if (!shortJumpApplied && framesSinceTakeoff <= profile.twoStageWindowFrames

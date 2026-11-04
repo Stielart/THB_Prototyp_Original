@@ -132,7 +132,9 @@ public class MovementProfile
             new MovementProfile
             {
                 name = "Direkt", figureHeight = 11.9f,
-                walkSpeed = 90f, runSpeed = 90f,
+                // Tempo 70 statt Celestes 90 Spielpixel/s: Mit 90 war die Figur nach der Umrechnung auf die Figurengröße viel zu schnell
+                // (14,7 statt 11,4 Tiles/s), bewusste Abweichung vom Original.
+                walkSpeed = 70f, runSpeed = 70f,
                 acceleration = 1080f, passiveDeceleration = 1080f, activeBraking = 1080f,
                 airAccelerationMultiplier = 0.6f, airDecelerationMultiplier = 0.05f, airTurnMultiplier = 0.6f,
                 jumpHeightFigures = 2.3f, apexFrames = 19.5f, speedJumpBonus = false,
@@ -157,8 +159,9 @@ public class MovementProfile
                 apexHangMultiplier = 1f,
                 fallGravityMultiplier = 2f, holdFallGravity = true, holdFallGravityFactor = 0.5f,
                 // Wandsprung: Eigene Wahl (Super Mario World hat keinen Wandsprung), angelehnt an New Super Mario Bros.:
-                // steiler Winkel, senkrechte Geschwindigkeit etwa 90 % des Absprungs, waagerecht etwas über der Lauftaste
-                wallJump = true, wallSlide = true, wallJumpAngle = 35f, wallJumpSpeed = 280f, wallJumpLockFrames = 8
+                // steiler Winkel (20 Grad von der Senkrechten), senkrechte Geschwindigkeit etwa 90 % des Absprungs, danach 20 Frames (0,33 s)
+                // ohne Steuerung, in denen die Figur gut 3 Tiles von der Wand wegfliegt
+                wallJump = true, wallSlide = true, wallJumpAngle = 20f, wallJumpSpeed = 280f, wallJumpLockFrames = 20
             },
             // Sonic Mania: ca. 127 Frames Beschleunigung, 117 Frames Auslaufen, 10 Frames Bremsen.
             // Sprung 2,7 Figurenhöhen, Flugdauer lang 63 Frames, Gravitation konstant. Genau zwei Höhen (2,7 und 1,7):

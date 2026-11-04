@@ -272,6 +272,54 @@ public class Player : MonoBehaviour
         SwitchState(jumpState);
     }
 
+    /// <summary>
+    /// Gilt, solange der Aufstieg von einer Sprungfeder stammt. Der Sprungabbruch (Taste loslassen) wirkt dann nicht,
+    /// damit jede Feder unabhängig von der Taste dieselbe Höhe liefert. Wird in PlayerJumpState.Enter zurückgesetzt.
+    /// </summary>
+    [HideInInspector] public bool springLaunchActive;
+
+    /// <summary>
+    /// Sprungfeder: Die Figur wird in Richtung der Feder geschleudert. Die Geschwindigkeit ist die, mit der sie bei
+    /// senkrechtem Start (nach der Rechnung mit der Sprunggravitation des Profils) heightUnits Tiles hoch steigt. Die Höhe
+    /// gilt damit für alle Profile gleich, nicht in Figurenhöhen. Taste und Tempo-Bonus spielen keine Rolle. Bei senkrechter
+    /// Feder bleibt die waagerechte Geschwindigkeit erhalten, bei schräger Feder gilt sie für holdFrames Frames fest.
+    /// </summary>
+    public void SpringLaunch(Vector2 direction, float heightUnits, int holdFrames)
+    {
+        jumpBuffer.Consume();
+        coyoteTimer.Consume();
+        SwitchState(jumpState);                       // Zustand, Animation und Wendeverzögerung wie bei einem Sprung
+
+        direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.up;
+        float speed = Mathf.Sqrt(2f * jumpGravityUnit * Mathf.Max(0f, heightUnits));
+        jumpVelocity = speed * Mathf.Max(0f, direction.y);
+
+        float vx = rb.linearVelocity.x;
+        if (Mathf.Abs(direction.x) > 0.05f)
+        {
+            // Schräge oder waagerechte Feder: Die Figur behält die Federgeschwindigkeit für holdFrames Frames,
+            // ohne dass Steuerung oder Auslaufen sie sofort abbauen (HandleHorizontalMovement liest die beiden Felder)
+            vx = speed * direction.x;
+            currentSpeed = vx;
+            horizontalHoldSpeed = vx;
+            horizontalHoldFrames = Mathf.Max(0, holdFrames);
+            isTurningAround = false;
+            turningLocked = false;
+            Turn(vx > 0f);
+        }
+        else
+        {
+            horizontalHoldFrames = 0;
+        }
+
+        rb.linearVelocity = new Vector2(vx, speed * direction.y);
+        springLaunchActive = true;
+    }
+
+    /// <summary>Frames, in denen die waagerechte Geschwindigkeit nach einer schrägen Feder fest bleibt (siehe SpringLaunch).</summary>
+    [HideInInspector] public int horizontalHoldFrames;
+    [HideInInspector] public float horizontalHoldSpeed;
+
     /// <summary>Versetzt die Figur in den "getroffen"-Zustand (unsichtbar, Physik und Eingabe aus) oder zurück.</summary>
     public void SetDead(bool dead)
     {
@@ -303,6 +351,8 @@ public class Player : MonoBehaviour
         isTurningAround = false;
         turningLocked = false;
         inputLockedUntil = 0f;
+        horizontalHoldFrames = 0;
+        springLaunchActive = false;
         wallStoppedTime = -10f;
         jumpBuffer.Consume();
         coyoteTimer.Consume();

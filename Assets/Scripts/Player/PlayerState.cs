@@ -47,6 +47,22 @@ public abstract class PlayerState : MonoBehaviour
 
     protected void HandleHorizontalMovement(float acceleration, float deceleration, float turnDeceleration, bool ignoreInput = false, bool allowActiveBrake = true)
     {
+        // Nach einer schrägen Sprungfeder bleibt die waagerechte Geschwindigkeit für einige Frames fest (am Boden endet das sofort)
+        if (player.horizontalHoldFrames > 0)
+        {
+            if (player.isGrounded)
+            {
+                player.horizontalHoldFrames = 0;
+            }
+            else
+            {
+                player.horizontalHoldFrames--;
+                player.currentSpeed = player.horizontalHoldSpeed;
+                rb.linearVelocity = new Vector2(player.horizontalHoldSpeed, rb.linearVelocity.y);
+                return;
+            }
+        }
+
         float effectiveInput = ignoreInput ? 0f : player.xInput;
 
         // Wand in Bewegungsrichtung: currentSpeed auf 0 setzen. currentSpeed ist ein gespeicherter Wert, die Physik

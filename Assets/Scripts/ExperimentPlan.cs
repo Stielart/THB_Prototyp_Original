@@ -13,6 +13,8 @@ public class ExperimentStep
     /// <summary>0 = Direkt, 1 = Mittel, 2 = Momentum.</summary>
     public int profile;
     public bool tolerance;
+    /// <summary>false: aktives Bremsen aus (Gegenrichtung wirkt wie Taste loslassen, nur passives Auslaufen).</summary>
+    public bool activeBraking = true;
     public string title;
     public string intro;
     public int capSeconds;
@@ -25,7 +27,9 @@ public class ExperimentStep
 /// Alles Zahlenwerte und Texte stehen hier an einer Stelle, damit sie nach dem Pilottest leicht angepasst werden können.
 ///
 /// Ablauf je Person: Übung, Toleranzvergleich (zwei Durchgänge im selben Level, Mittel-Profil, Reihenfolge wechselt),
-/// Profilvergleich (drei Durchgänge im Präzisionslevel, Toleranz an, Reihenfolge der Profile wechselt).
+/// Profilvergleich (drei Profile im Präzisionslevel, Toleranz an, Reihenfolge der Profile wechselt).
+/// Bremsvergleich: Zum Profil Mittel kommt ein zusätzlicher Durchgang ohne aktives Bremsen. Mittel mit und ohne Bremse stehen direkt
+/// nacheinander an der Stelle von Mittel in der Profilreihenfolge, die Reihenfolge der beiden wechselt nach der Teilnehmer-Nummer.
 /// Die Zuteilung ergibt sich aus der Teilnehmer-Nummer (Gegengewichtung): Je sechs aufeinanderfolgende Nummern decken alle sechs
 /// Profilreihenfolgen ab, je zwölf Nummern zusätzlich beide Toleranzreihenfolgen.
 /// </summary>
@@ -34,7 +38,8 @@ public static class ExperimentPlan
     // Namen der Szenen (müssen in den Build Settings stehen).
     public const string ScenePractice = "Uebung";
     public const string SceneTolerance = "Toleranz";
-    public const string ScenePrecision = "Praezision";
+    // Präzisionslevel: je Profil eine eigene Szene (gleiche Geometrie, die Früchte zeigen den Weg des Profils). Index = Profil (0 Direkt, 1 Mittel, 2 Momentum).
+    private static readonly string[] ScenePrecisionByProfile = { "Praezision_Direkt", "Praezision_Mittel", "Praezision_Momentum" };
 
     // Obergrenzen. Danach endet der Durchgang als "nicht geschafft".
     public const int PracticeCapSeconds = 150;
@@ -67,11 +72,24 @@ public static class ExperimentPlan
         return (n + n / 6) % 2 == 0;
     }
 
-    /// <summary>Kurzcode der Bedingung, z. B. "A132": Gruppe A/B und die Reihenfolge der Profile (1 Direkt, 2 Mittel, 3 Momentum).</summary>
+    /// <summary>
+    /// true: Beim Bremsvergleich kommt Mittel zuerst mit aktivem Bremsen, sonst zuerst ohne. Je sechs aufeinanderfolgende Nummern teilen
+    /// sich 3 zu 3, die Hälften wechseln von Block zu Block.
+    /// </summary>
+    public static bool BrakeFirst(int id)
+    {
+        int n = System.Math.Max(1, id) - 1;
+        return (n / 3 + n / 6) % 2 == 0;
+    }
+
+    /// <summary>
+    /// Kurzcode der Bedingung, z. B. "A132m": Gruppe A/B der Toleranz, Reihenfolge der Profile (1 Direkt, 2 Mittel, 3 Momentum)
+    /// und beim Bremsvergleich m = Mittel zuerst mit Bremse, o = zuerst ohne.
+    /// </summary>
     public static string ConditionCode(int id)
     {
         int[] order = ProfileOrders[ProfileOrderIndex(id)];
-        return (ToleranceFirst(id) ? "A" : "B") + (order[0] + 1) + (order[1] + 1) + (order[2] + 1);
+        return (ToleranceFirst(id) ? "A" : "B") + (order[0] + 1) + (order[1] + 1) + (order[2] + 1) + (BrakeFirst(id) ? "m" : "o");
     }
 
     public static List<ExperimentStep> Build(int id)
@@ -106,20 +124,44 @@ public static class ExperimentPlan
             });
         }
 
+        // Profilteile: Mittel kommt zweimal (mit und ohne aktives Bremsen), direkt nacheinander
+        int partNumber = 3;
         for (int i = 0; i < 3; i++)
         {
             int profile = order[i];
-            steps.Add(new ExperimentStep
+            if (profile == 1)
             {
-                number = 3 + i, scene = ScenePrecision, kind = StepKind.Profile, profile = profile, tolerance = true,
-                title = $"Teil {3 + i}",
-                intro = "Erreiche die Zielflagge. In diesem Level kannst du dich an Wänden abstoßen: in der Luft gegen die Wand drücken und springen. "
-                      + "Das Level ist in allen drei Teilen gleich, die Figur fühlt sich aber jedes Mal etwas anders an.\n\n"
-                      + ProfileHint(profile) + LimitText(ProfileCapSeconds, ProfileCapAttempts),
-                capSeconds = ProfileCapSeconds, capAttempts = ProfileCapAttempts
-            });
+                bool withBrakeFirst = BrakeFirst(id);
+                steps.Add(MakeProfileStep(partNumber++, profile, withBrakeFirst));
+                steps.Add(MakeProfileStep(partNumber++, profile, !withBrakeFirst));
+            }
+            else
+            {
+                steps.Add(MakeProfileStep(partNumber++, profile, true));
+            }
         }
         return steps;
+    }
+
+    private static ExperimentStep MakeProfileStep(int number, int profile, bool activeBraking)
+    {
+        return new ExperimentStep
+        {
+            number = number, scene = ScenePrecisionByProfile[profile], kind = StepKind.Profile, profile = profile, tolerance = true,
+            activeBraking = activeBraking,
+            title = $"Teil {number}",
+            intro = "Erreiche die Zielflagge. In diesem Level kannst du dich an Wänden abstoßen: in der Luft gegen die Wand drücken und springen. "
+                  + "Das Level ist in allen Teilen gleich aufgebaut, die Figur fühlt sich aber jedes Mal etwas anders an. Früchte zeigen dir einen möglichen Weg.\n\n"
+                  + ProfileHint(profile) + BrakeHint(activeBraking) + LimitText(ProfileCapSeconds, ProfileCapAttempts),
+            capSeconds = ProfileCapSeconds, capAttempts = ProfileCapAttempts
+        };
+    }
+
+    private static string BrakeHint(bool activeBraking)
+    {
+        if (activeBraking)
+            return "";
+        return "In diesem Teil bremst die Figur nicht von selbst, wenn du in die Gegenrichtung drückst: Sie rutscht erst aus. Plane deine Landungen entsprechend.\n\n";
     }
 
     private static string ProfileHint(int profile)

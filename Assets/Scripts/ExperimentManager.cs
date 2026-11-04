@@ -152,6 +152,7 @@ public class ExperimentManager : MonoBehaviour
         player.ledgeCorrectionEnabled = t;
         player.cornerCorrectionEnabled = t;
         player.hitboxToleranceEnabled = t;
+        player.activeBrakingEnabled = pendingStep.activeBraking;
         // Start() der Figur ruft ApplyProfile(activeProfileIndex) auf.
         SetPlayerInput(false);
     }
@@ -185,7 +186,7 @@ public class ExperimentManager : MonoBehaviour
         int fruits = FruitManager.Instance != null ? FruitManager.Instance.Collected : 0;
         int fps = unscaledTime > 0f ? Mathf.RoundToInt(renderFrames / unscaledTime) : 0;
 
-        string body = $"ID{participantId:D2}-{ExperimentPlan.ConditionCode(participantId)}-S{s.number}-T{(s.tolerance ? 1 : 0)}-P{s.profile + 1}"
+        string body = $"ID{participantId:D2}-{ExperimentPlan.ConditionCode(participantId)}-S{s.number}-T{(s.tolerance ? 1 : 0)}-P{s.profile + 1}-AB{(s.activeBraking ? 1 : 0)}"
                     + $"-V{attempts}-Z{seconds}-F{fruits}-{status}-B{fps}";
         int sum = 0;
         foreach (char c in body)
@@ -248,8 +249,8 @@ public class ExperimentManager : MonoBehaviour
 
     private void CopyToClipboard(string text, string info)
     {
-        GUIUtility.systemCopyBuffer = text;
-        copyInfo = info;
+        bool ok = WebClipboard.Copy(text);
+        copyInfo = ok ? info : "Kopieren hat nicht geklappt.";
     }
 
     // ------------------------------------------------------------------ Update
@@ -302,7 +303,7 @@ public class ExperimentManager : MonoBehaviour
                 unscaledTime += Time.unscaledDeltaTime;
                 renderFrames++;
                 ExperimentStep s = steps[stepIndex];
-                if (frames >= s.capSeconds * PhysicsFps)
+                if (s.capSeconds > 0 && frames >= s.capSeconds * PhysicsFps)
                     Finish("ZEIT");
                 else if (s.capAttempts > 0 && AttemptManager.Instance != null && AttemptManager.Instance.Attempts > s.capAttempts)
                     Finish("VERS");
