@@ -633,6 +633,153 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 22, y: 40}
+  - name: Terrain_24
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 9
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 62
+      y: 76
+      width: 16
+      height: 16
+    spriteID: 280db3e7d85a21944aa630f9e04b848b
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 62, y: 76}
+  - name: Terrain_25
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 9
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 62
+      y: 100
+      width: 16
+      height: 16
+    spriteID: 948f0c8acf6a2ae4a83682ac2b9a1c03
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 62, y: 100}
+  - name: Terrain_26
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 9
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 62
+      y: 124
+      width: 16
+      height: 16
+    spriteID: d706ca91f2c583049896690f6de31012
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 62, y: 124}
+  - name: Terrain_27
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 9
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 62
+      y: 148
+      width: 16
+      height: 16
+    spriteID: 54842943c88c68f41afe760265770bc0
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 62, y: 148}
+  - name: Terrain_28
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 9
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 62
+      y: 172
+      width: 16
+      height: 16
+    spriteID: 378e0c2f92f6705449c14c2302077c38
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 62, y: 172}
+  - name: Terrain_29
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 9
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 62
+      y: 196
+      width: 16
+      height: 16
+    spriteID: 76f91bc39c119f04aaf58a10137499ed
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 62, y: 196}
+  - name: Terrain_30
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 9
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 62
+      y: 220
+      width: 16
+      height: 16
+    spriteID: 5cee7cb65c2538941879f3476751c590
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 62, y: 220}
   asepriteLayers:
   - layerIndex: 0
     uuid:
@@ -653,9 +800,9 @@ ScriptedImporter:
       cellRect:
         x: 0
         y: 112
-        width: 11
+        width: 17
         height: 4
-      tileIndices: 01000000020000000300000000000000000000000f000000130000001400000000000000000000001700000004000000050000000600000000000000000000000e000000000000001100000000000000000000000000000007000000080000000900000000000000000000001200000010000000150000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+      tileIndices: 01000000020000000300000000000000000000000f000000130000001400000000000000000000001700000000000000000000000000000000000000000000000000000004000000050000000600000000000000000000000e000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000007000000080000000900000000000000000000001200000010000000150000000000000000000000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000000000000000000018000000190000001a0000001b0000001c0000001d0000001e000000
     tileSetIndex: 0
     parentIndex: -1
   - layerIndex: 1
@@ -828,6 +975,48 @@ ScriptedImporter:
         y: 16
       name: Terrain_23
       spriteId: d1b8953b122aafd4385da0d5b9c96b0a
+    - tileId: 24
+      size:
+        x: 16
+        y: 16
+      name: Terrain_24
+      spriteId: 280db3e7d85a21944aa630f9e04b848b
+    - tileId: 25
+      size:
+        x: 16
+        y: 16
+      name: Terrain_25
+      spriteId: 948f0c8acf6a2ae4a83682ac2b9a1c03
+    - tileId: 26
+      size:
+        x: 16
+        y: 16
+      name: Terrain_26
+      spriteId: d706ca91f2c583049896690f6de31012
+    - tileId: 27
+      size:
+        x: 16
+        y: 16
+      name: Terrain_27
+      spriteId: 54842943c88c68f41afe760265770bc0
+    - tileId: 28
+      size:
+        x: 16
+        y: 16
+      name: Terrain_28
+      spriteId: 378e0c2f92f6705449c14c2302077c38
+    - tileId: 29
+      size:
+        x: 16
+        y: 16
+      name: Terrain_29
+      spriteId: 76f91bc39c119f04aaf58a10137499ed
+    - tileId: 30
+      size:
+        x: 16
+        y: 16
+      name: Terrain_30
+      spriteId: 5cee7cb65c2538941879f3476751c590
     guid: -1469035881
   platformSettings:
   - name: DefaultTexturePlatform

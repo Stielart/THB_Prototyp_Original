@@ -28,23 +28,41 @@ public class PlayerWallSlideState : PlayerAirState
         base.Enter();
 
 
-        if (player.currentSpeed < 0)
-            player.currentSpeed *= -1;
-        float wallSlideSpeed = player.currentSpeed * player.wallSlideSpeedModifier;
-        if(wallSlideSpeed == 0)
-            wallSlideSpeed = player.wallSlideMinSpeedUnit;
-
+        // Hochrutschen: Die Höhe kommt aus dem Profil (in Pixeln). Früher kam sie aus currentSpeed * Faktor. Seit currentSpeed an der
+        // Wand auf 0 gesetzt wird (HandleHorizontalMovement), war das nur noch ein winziger Rest bei gedrückter Richtungstaste
+        // und der Mindestwert nur ohne Taste. Jetzt zählt das Tempo vor dem Wandkontakt (wallStoppedSpeed), nicht die Taste:
+        // Stillstand = wallRunUpHeight, Tempo wallRunUpFullSpeed (0 = Höchsttempo) = wallRunUpHeightAtFullSpeed (0 = nicht tempoabhängig).
+        // wallRunUpHeight 0 und kein Tempo-Wert: kein Hochrutschen, die Figur haftet sofort und fällt danach wie gewohnt ab.
+        MovementProfile profile = player.ActiveProfile;
+        float heightPx = profile.wallRunUpHeight;
+        if (profile.wallRunUpHeightAtFullSpeed > 0f)
+        {
+            float approachSpeed = Mathf.Abs(player.currentSpeed);
+            if (Time.time - player.wallStoppedTime < 0.25f)
+                approachSpeed = Mathf.Abs(player.wallStoppedSpeed);
+            float fullSpeed = profile.wallRunUpFullSpeed > 0f
+                ? player.PixelsPerSecondToUnits(profile.wallRunUpFullSpeed)
+                : player.runMaxSpeedUnit;
+            float t = Mathf.Clamp01(approachSpeed / Mathf.Max(0.01f, fullSpeed));
+            // quadratisch: normales Laufen bleibt niedrig, erst hohes Tempo (Spin-Dash) rutscht weit
+            heightPx = Mathf.Lerp(profile.wallRunUpHeight, profile.wallRunUpHeightAtFullSpeed, t * t);
+        }
+        float runUpHeight = player.PixelsToUnits(heightPx);
 
         player.currentGravity = player.jumpGravityUnit * player.wallSlideGravityMod;
-        // Debug.Log($"WallSlideState Enter, wallSlideSpeed: {wallSlideSpeed}, currentGravity: {player.currentGravity}");
 
-        player.jumpVelocity = player.CalculateJumpVelocity(
-         wallSlideSpeed,
-         player.pixelApexFrames,
-         Player.PhysicsFPS
-     );
-
-
+        if (runUpHeight > 0f)
+        {
+            player.jumpVelocity = player.CalculateJumpVelocity(
+                runUpHeight,
+                player.pixelApexFrames,
+                Player.PhysicsFPS
+            );
+        }
+        else
+        {
+            player.jumpVelocity = 0f;
+        }
 
         player.rb.linearVelocity = new Vector2(
            0,

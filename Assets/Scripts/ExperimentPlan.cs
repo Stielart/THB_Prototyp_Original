@@ -15,11 +15,18 @@ public class ExperimentStep
     public bool tolerance;
     /// <summary>false: aktives Bremsen aus (Gegenrichtung wirkt wie Taste loslassen, nur passives Auslaufen).</summary>
     public bool activeBraking = true;
+    /// <summary>Zusätzlicher Schalter für die Ledge Correction. Sie ist nur an, wenn auch tolerance an ist und dieser Wert true ist.</summary>
+    public bool ledgeCorrection = true;
+    /// <summary>Überschrift im Spiel. Sie entspricht dem Seitentitel im Fragebogen, damit die Person die Seite wiederfindet.</summary>
     public string title;
+    /// <summary>Titel der zugehörigen Seite im Fragebogen (LamaPoll), genau so wie die Person ihn dort sieht.</summary>
+    public string page;
     public string intro;
     public int capSeconds;
     /// <summary>0 = keine Begrenzung der Versuche.</summary>
     public int capAttempts;
+    /// <summary>true: Zeit, Versuche und Früchte zählen erst ab dem ersten Checkpoint (davor liegt ein Übungsabschnitt im selben Level).</summary>
+    public bool measureFromCheckpoint;
 }
 
 /// <summary>
@@ -42,12 +49,23 @@ public static class ExperimentPlan
     private static readonly string[] ScenePrecisionByProfile = { "Praezision_Direkt", "Praezision_Mittel", "Praezision_Momentum" };
 
     // Obergrenzen. Danach endet der Durchgang als "nicht geschafft".
-    public const int PracticeCapSeconds = 150;
+    /// <summary>0 = kein Zeitlimit in der Übung. Beenden geht nach PracticeSkipAfterSeconds über einen Knopf.</summary>
+    public const int PracticeCapSeconds = 0;
     public const int PracticeSkipAfterSeconds = 30;
     public const int ToleranceCapSeconds = 300;
     public const int ToleranceCapAttempts = 25;
     public const int ProfileCapSeconds = 240;
     public const int ProfileCapAttempts = 20;
+
+    // Ledge Correction je Profil im Präzisionslevel (Index = Profil: 0 Direkt, 1 Mittel, 2 Momentum).
+    // Momentum: aus, weil am Anfang des Levels ein Hindernis verlangt, den Dash aufzuladen (Ledge Correction würde es umgehen).
+    private static readonly bool[] ProfileLedgeCorrection = { true, true, false };
+
+    /// <summary>
+    /// Je Profil: Zählt die Messung erst ab dem ersten Checkpoint? Direkt und Momentum haben am Levelanfang einen kurzen Übungsabschnitt,
+    /// Mittel hatte schon eine Übung und beginnt direkt. Index = Profil (0 Direkt, 1 Mittel, 2 Momentum).
+    /// </summary>
+    private static readonly bool[] ProfileMeasureFromCheckpoint = { true, false, true };
 
     private static readonly int[][] ProfileOrders =
     {
@@ -58,10 +76,6 @@ public static class ExperimentPlan
         new[] { 2, 0, 1 },
         new[] { 2, 1, 0 },
     };
-
-    private const string Controls =
-        "Steuerung (Tastatur): A/D oder Pfeiltasten = laufen, Leertaste = springen (länger halten = höher), Shift = rennen.\n" +
-        "Controller: Stick oder Steuerkreuz = laufen, A = springen, X = rennen.";
 
     public static int ProfileOrderIndex(int id) => (System.Math.Max(1, id) - 1) % 6;
 
@@ -101,12 +115,12 @@ public static class ExperimentPlan
         steps.Add(new ExperimentStep
         {
             number = 0, scene = ScenePractice, kind = StepKind.Practice, profile = 1, tolerance = firstOn,
-            title = "Übung",
-            intro = "Hier lernst du die Steuerung kennen. Dieser Teil wird nicht bewertet, probiere alles in Ruhe aus: laufen, springen, "
-                  + "Früchte sammeln, einen Checkpoint berühren, einen Pilz von oben anspringen. Stacheln und Abgründe setzen dich zum letzten "
-                  + "Checkpoint zurück.\n\n" + Controls + "\n\n"
-                  + $"Ziel ist die Zielflagge. Nach {PracticeSkipAfterSeconds} Sekunden kannst du die Übung über einen Knopf beenden, "
-                  + $"spätestens endet sie nach {FormatMinutes(PracticeCapSeconds)} Minuten.",
+            title = "Übung", page = "Übungslevel",
+            intro = "Hier lernst du die Steuerung kennen. Versuche, ein Gefühl für den Charakter zu bekommen. "
+                  + "Du siehst hier alle Hindernisse, die dich in diesem Test erwarten werden. "
+                  + "Je länger du die Sprungtaste hältst, desto höher springst du.\n\n"
+                  + $"Erreiche die Flagge, um die Übung abzuschließen. Nach {PracticeSkipAfterSeconds} Sekunden kannst du die Übung über einen Knopf beenden. "
+                  + "Ansonsten gibt es hier kein Zeitlimit.",
             capSeconds = PracticeCapSeconds, capAttempts = 0
         });
 
@@ -116,9 +130,11 @@ public static class ExperimentPlan
             steps.Add(new ExperimentStep
             {
                 number = i + 1, scene = SceneTolerance, kind = StepKind.Tolerance, profile = 1, tolerance = on,
-                title = $"Teil {i + 1}",
-                intro = "Erreiche die Zielflagge am Ende des Levels. Stacheln und Abgründe setzen dich zum letzten Checkpoint zurück. "
-                      + "Früchte sind optional.\n\n"
+                title = $"Erster Test, Teil {i + 1}/2", page = $"Erster Test, Teil {i + 1}/2",
+                intro = (i == 0
+                          ? "Du spielst dieses Level jetzt zweimal hintereinander und beantwortest nach jedem Durchgang kurze Fragen.\n\n"
+                          : "Dasselbe Level noch einmal.\n\n")
+                      + "Wie in der Übung musst du die Flagge erreichen. Checkpoints speichern deinen bisherigen Stand.\n\n"
                       + LimitText(ToleranceCapSeconds, ToleranceCapAttempts),
                 capSeconds = ToleranceCapSeconds, capAttempts = ToleranceCapAttempts
             });
@@ -149,9 +165,14 @@ public static class ExperimentPlan
         {
             number = number, scene = ScenePrecisionByProfile[profile], kind = StepKind.Profile, profile = profile, tolerance = true,
             activeBraking = activeBraking,
-            title = $"Teil {number}",
-            intro = "Erreiche die Zielflagge. In diesem Level kannst du dich an Wänden abstoßen: in der Luft gegen die Wand drücken und springen. "
-                  + "Das Level ist in allen Teilen gleich aufgebaut, die Figur fühlt sich aber jedes Mal etwas anders an. Früchte zeigen dir einen möglichen Weg.\n\n"
+            ledgeCorrection = ProfileLedgeCorrection[profile],
+            measureFromCheckpoint = ProfileMeasureFromCheckpoint[profile],
+            title = $"Zweiter Test, Teil {number - 2}/4", page = $"Zweiter Test, Teil {number - 2}/4",
+            intro = (number == 3 ? "Jetzt beginnt der zweite Test mit vier Durchgängen. Nach jedem Teil beantwortest du wieder kurze Fragen. " : "")
+                  + (profile == 0 ? "" : "In diesem Level musst du von Wänden abspringen. ") // Direkt hat keinen Wandsprung (Profil wallJump aus), sein Level braucht ihn nicht
+                  + "Das Level ist in allen Teilen im Kern gleich aufgebaut, die Figur fühlt sich aber jedes Mal etwas anders an. Früchte zeigen dir einen möglichen Weg."
+                  + (ProfileMeasureFromCheckpoint[profile] ? " Am Anfang kommt ein kurzer Übungsabschnitt. Zeit und Versuche zählen erst ab dem ersten Checkpoint." : "")
+                  + "\n\n"
                   + ProfileHint(profile) + BrakeHint(activeBraking) + LimitText(ProfileCapSeconds, ProfileCapAttempts),
             capSeconds = ProfileCapSeconds, capAttempts = ProfileCapAttempts
         };
@@ -168,8 +189,7 @@ public static class ExperimentPlan
     {
         // Momentum hat als einziges Profil eine Zusatzbewegung. Die anderen brauchen keinen Hinweis.
         if (profile == 2)
-            return "Zusatz in diesem Teil: Spin-Dash. Nach unten halten und mehrmals Sprung drücken, dann nach unten loslassen: "
-                 + "die Figur rollt schnell los.\n\n";
+            return "Neu: der Spin-Dash. Nach unten halten, mehrmals Sprung drücken und dann nach unten loslassen. Die Figur rollt schnell los.\n\n";
         return "";
     }
 
@@ -178,7 +198,7 @@ public static class ExperimentPlan
         string text = $"Der Durchgang endet automatisch nach {FormatMinutes(seconds)} Minuten";
         if (attempts > 0)
             text += $" oder nach {attempts} Versuchen";
-        return text + ". Das ist normal und kein Fehler von dir.";
+        return text + ".";
     }
 
     private static string FormatMinutes(int seconds)
@@ -188,11 +208,11 @@ public static class ExperimentPlan
     }
 
     // Texte für die Zwischenbildschirme.
-    public static string QuestionnairePrompt(int number)
+    /// <summary>page = Seitentitel im Fragebogen (ExperimentStep.page).</summary>
+    public static string QuestionnairePrompt(string page)
     {
-        if (number == 0)
-            return "Die Übung ist beendet. Trage bitte diesen Code im Fragebogen im Abschnitt zur Übung ein. Danach geht es weiter.";
-        return $"Bitte öffne jetzt den Fragebogen, fülle Teil {number} aus und trage dort diesen Code ein. Danach klickst du hier auf \"Weiter\".";
+        return $"Bitte wechsle jetzt in den Fragebogen (anderer Tab), öffne die Seite \"{page}\" und füge dort diesen Code ein. "
+             + "Danach kommst du hierher zurück und klickst auf \"Weiter\".";
     }
 
     public static string StatusText(string status)
@@ -200,8 +220,8 @@ public static class ExperimentPlan
         switch (status)
         {
             case "OK": return "Geschafft!";
-            case "ZEIT": return "Die Zeit ist abgelaufen. Das ist normal und kein Fehler von dir.";
-            case "VERS": return "Die Versuche sind aufgebraucht. Das ist normal und kein Fehler von dir.";
+            case "ZEIT": return "Die Zeit ist abgelaufen. Die vorzeitige Beendigung stellt für den Test ein valides Ergebnis dar. Also keine Sorge.";
+            case "VERS": return "Die Versuche sind aufgebraucht. Die vorzeitige Beendigung stellt für den Test ein valides Ergebnis dar. Also keine Sorge.";
             case "UEB": return "Übung beendet.";
             default: return "";
         }

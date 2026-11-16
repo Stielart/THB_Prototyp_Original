@@ -46,10 +46,29 @@ public class ExperimentManager : MonoBehaviour
     private int frames;
     private float unscaledTime;
     private int renderFrames;
+    /// <summary>false: Der Schritt hat einen Übungsabschnitt. Zeit, Versuche und Früchte zählen erst ab dem ersten Checkpoint.</summary>
+    private bool measuring = true;
+    private int fruitBaseline;
 
     private ExperimentStep pendingStep;
     private Texture2D backdrop;
-    private GUIStyle titleStyle, bodyStyle, buttonStyle, boxStyle, hudStyle, smallStyle;
+    private GUIStyle titleStyle, bodyStyle, buttonStyle, boxStyle, hudStyle, smallStyle, readyStyle;
+
+    // Controller-Bilder auf dem Anleitungsbildschirm (Assets/Resources/ControllerHints, ein Bild je Profil: 0 Direkt, 1 Mittel, 2 Momentum).
+    // Alle Bilder haben dieselbe Leinwand, damit der Controller von Bild zu Bild an derselben Stelle bleibt. Die Maße unten beziehen sich
+    // auf die Grundgröße von 300 x 180 Pixeln; die Bilddateien selbst dürfen höher aufgelöst sein (aktuell 5-fach, 1500 x 900) und werden
+    // dann weich herunterskaliert. Gemessen: oberste nicht transparente Zeile (Direkt 19, Mittel 6, Momentum 19; die unterste liegt bei
+    // 121, 121 und 168) und Mitte der Breite (Pixel 32 bis 291).
+    private static readonly string[] HintResourceNames =
+        { "ControllerHints/Controller_Direkt", "ControllerHints/Controller_Mittel", "ControllerHints/Controller_Momentum" };
+    private static readonly float[] HintContentTop = { 19f, 6f, 19f };
+    private const float HintContentCenterX = 161.5f;
+    private const float HintScale = 2f;   // Darstellungsgröße im virtuellen 1280 x 720 Bild: Grundgröße 300 x 180 mal 2 = 600 x 360
+    private const float HintBaseWidth = 300f, HintBaseHeight = 180f;
+    private const float HintY = 266f;     // obere Kante der Leinwand im virtuellen 1280 x 720 Bild (der Momentum-Controller endet bei 602, der Start-Knopf beginnt bei 610)
+    private readonly Texture2D[] hintTextures = new Texture2D[3];
+    private readonly bool[] hintTried = new bool[3];
+    private int readyFontSize;
 
     private static readonly Key[] DigitKeys =
         { Key.Digit0, Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, Key.Digit6, Key.Digit7, Key.Digit8, Key.Digit9 };
@@ -70,8 +89,31 @@ public class ExperimentManager : MonoBehaviour
 #endif
     }
 
-    private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
-    private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        AttemptManager.CheckpointReached += OnCheckpointReached;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        AttemptManager.CheckpointReached -= OnCheckpointReached;
+    }
+
+    /// <summary>Erster Checkpoint in einem Schritt mit Übungsabschnitt: Ab hier beginnt die Messung (Zeit, Versuche, Früchte, Bildrate).</summary>
+    private void OnCheckpointReached()
+    {
+        if (state != State.Playing || measuring)
+            return;
+        measuring = true;
+        frames = 0;
+        unscaledTime = 0f;
+        renderFrames = 0;
+        if (AttemptManager.Instance != null)
+            AttemptManager.Instance.ResetAttempts();
+        fruitBaseline = FruitManager.Instance != null ? FruitManager.Instance.Collected : 0;
+    }
 
     // ------------------------------------------------------------------ Ablauf
 
@@ -111,6 +153,7 @@ public class ExperimentManager : MonoBehaviour
         stepIndex = index;
         pendingStep = steps[index];
         copyInfo = "";
+        readyFontSize = 0;
 
         if (!Application.CanStreamedLevelBeLoaded(pendingStep.scene))
         {
@@ -149,7 +192,7 @@ public class ExperimentManager : MonoBehaviour
         player.activeProfileIndex = pendingStep.profile;
         player.coyoteEnabled = t;
         player.jumpBufferEnabled = t;
-        player.ledgeCorrectionEnabled = t;
+        player.ledgeCorrectionEnabled = t && pendingStep.ledgeCorrection;
         player.cornerCorrectionEnabled = t;
         player.hitboxToleranceEnabled = t;
         player.activeBrakingEnabled = pendingStep.activeBraking;
@@ -163,6 +206,8 @@ public class ExperimentManager : MonoBehaviour
         unscaledTime = 0f;
         renderFrames = 0;
         lastStatus = "";
+        measuring = !steps[stepIndex].measureFromCheckpoint;
+        fruitBaseline = 0;
         if (AttemptManager.Instance != null)
             AttemptManager.Instance.ResetRun();
         state = State.Playing;
@@ -183,7 +228,7 @@ public class ExperimentManager : MonoBehaviour
         if (status == "VERS")
             attempts = Mathf.Max(1, attempts - 1); // der letzte Tod hat den Zähler schon erhöht
         int seconds = Mathf.RoundToInt(frames / (float)PhysicsFps);
-        int fruits = FruitManager.Instance != null ? FruitManager.Instance.Collected : 0;
+        int fruits = FruitManager.Instance != null ? Mathf.Max(0, FruitManager.Instance.Collected - fruitBaseline) : 0;
         int fps = unscaledTime > 0f ? Mathf.RoundToInt(renderFrames / unscaledTime) : 0;
 
         string body = $"ID{participantId:D2}-{ExperimentPlan.ConditionCode(participantId)}-S{s.number}-T{(s.tolerance ? 1 : 0)}-P{s.profile + 1}-AB{(s.activeBraking ? 1 : 0)}"
@@ -242,7 +287,7 @@ public class ExperimentManager : MonoBehaviour
         {
             if (string.IsNullOrEmpty(codes[i]))
                 continue;
-            sb.Append(i == 0 ? "Übung" : "Teil " + i).Append(": ").Append(codes[i]).Append('\n');
+            sb.Append(steps[i].title).Append(": ").Append(codes[i]).Append('\n');
         }
         return sb.ToString();
     }
@@ -257,7 +302,7 @@ public class ExperimentManager : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (state == State.Playing)
+        if (state == State.Playing && measuring)
             frames++;
     }
 
@@ -303,6 +348,8 @@ public class ExperimentManager : MonoBehaviour
                 unscaledTime += Time.unscaledDeltaTime;
                 renderFrames++;
                 ExperimentStep s = steps[stepIndex];
+                if (!measuring)
+                    break; // Übungsabschnitt: noch keine Grenzen
                 if (s.capSeconds > 0 && frames >= s.capSeconds * PhysicsFps)
                     Finish("ZEIT");
                 else if (s.capAttempts > 0 && AttemptManager.Instance != null && AttemptManager.Instance.Attempts > s.capAttempts)
@@ -346,6 +393,23 @@ public class ExperimentManager : MonoBehaviour
         hudStyle.normal.textColor = new Color(1f, 1f, 1f, 0.85f);
         smallStyle = new GUIStyle(GUI.skin.label) { fontSize = 20, wordWrap = true, alignment = TextAnchor.UpperLeft };
         smallStyle.normal.textColor = new Color(1f, 0.85f, 0.5f);
+        readyStyle = new GUIStyle(bodyStyle);
+    }
+
+    /// <summary>Controller-Bild des Profils (null, wenn die Datei fehlt: dann zeigt der Bildschirm nur den Text).</summary>
+    private Texture2D GetHintTexture(int profile)
+    {
+        if (profile < 0 || profile >= hintTextures.Length)
+            return null;
+        if (!hintTried[profile])
+        {
+            hintTried[profile] = true;
+            Texture2D tex = Resources.Load<Texture2D>(HintResourceNames[profile]);
+            if (tex != null)
+                tex.filterMode = FilterMode.Trilinear; // Bild ist höher aufgelöst als die Anzeige: weich verkleinern statt Pixel zu überspringen
+            hintTextures[profile] = tex;
+        }
+        return hintTextures[profile];
     }
 
     private void OnGUI()
@@ -383,7 +447,8 @@ public class ExperimentManager : MonoBehaviour
     {
         ExperimentStep s = steps[stepIndex];
         int sec = frames / PhysicsFps;
-        GUI.Label(new Rect(20, VirtualHeight - 50, 500, 40), $"{s.title}   {sec / 60}:{sec % 60:D2}", hudStyle);
+        string timeText = measuring ? $"{sec / 60}:{sec % 60:D2}" : "Übungsabschnitt, Zeit startet am ersten Checkpoint";
+        GUI.Label(new Rect(20, VirtualHeight - 50, 900, 40), $"{s.title}   {timeText}", hudStyle);
 
         if (s.kind == StepKind.Practice && sec >= ExperimentPlan.PracticeSkipAfterSeconds)
         {
@@ -428,8 +493,35 @@ public class ExperimentManager : MonoBehaviour
     private void DrawReady()
     {
         ExperimentStep s = steps[stepIndex];
-        GUI.Label(new Rect(0, 50, VirtualWidth, 70), s.title, titleStyle);
-        GUI.Label(new Rect(190, 140, 900, 440), s.intro, bodyStyle);
+        GUI.Label(new Rect(0, 20, VirtualWidth, 64), s.title, titleStyle);
+
+        // Controller des Profils unter dem Text. Der Text bekommt den Platz darüber und wird bei Bedarf kleiner, damit er nicht in das Bild ragt.
+        int profile = Mathf.Clamp(s.profile, 0, HintResourceNames.Length - 1);
+        Texture2D hint = GetHintTexture(profile);
+        const float textX = 90f, textW = 1100f, textTop = 88f;
+        float textBottom = 600f;
+        if (hint != null)
+        {
+            textBottom = HintY + HintContentTop[profile] * HintScale - 10f;
+            GUI.DrawTexture(new Rect(VirtualWidth * 0.5f - HintContentCenterX * HintScale, HintY,
+                                     HintBaseWidth * HintScale, HintBaseHeight * HintScale), hint, ScaleMode.StretchToFill, true);
+        }
+        if (readyFontSize == 0)
+        {
+            readyFontSize = 16;
+            for (int size = 22; size >= 16; size -= 2)
+            {
+                readyStyle.fontSize = size;
+                if (readyStyle.CalcHeight(new GUIContent(s.intro), textW) <= textBottom - textTop)
+                {
+                    readyFontSize = size;
+                    break;
+                }
+            }
+        }
+        readyStyle.fontSize = readyFontSize;
+        GUI.Label(new Rect(textX, textTop, textW, textBottom - textTop), s.intro, readyStyle);
+
         if (GUI.Button(new Rect(490, 610, 300, 70), "Start", buttonStyle))
             StartPlaying();
         GUI.Label(new Rect(0, 684, VirtualWidth, 30), "oder Enter drücken", new GUIStyle(smallStyle) { alignment = TextAnchor.UpperCenter });
@@ -441,7 +533,7 @@ public class ExperimentManager : MonoBehaviour
         string code = codes[stepIndex];
         GUI.Label(new Rect(0, 60, VirtualWidth, 70), s.title + " beendet", titleStyle);
         GUI.Label(new Rect(190, 150, 900, 60), ExperimentPlan.StatusText(lastStatus), bodyStyle);
-        GUI.Label(new Rect(190, 215, 900, 120), ExperimentPlan.QuestionnairePrompt(s.number), bodyStyle);
+        GUI.Label(new Rect(190, 215, 900, 120), ExperimentPlan.QuestionnairePrompt(s.page), bodyStyle);
         GUI.Box(new Rect(140, 350, 1000, 80), code, new GUIStyle(boxStyle) { fontSize = 30 });
         if (GUI.Button(new Rect(490, 450, 300, 60), "Code kopieren", buttonStyle))
             CopyToClipboard(code, "Code kopiert.");
@@ -455,8 +547,8 @@ public class ExperimentManager : MonoBehaviour
     {
         GUI.Label(new Rect(0, 40, VirtualWidth, 70), "Geschafft – vielen Dank!", titleStyle);
         GUI.Label(new Rect(190, 120, 900, 120),
-            "Bitte öffne jetzt den Fragebogen, fülle den letzten Teil aus und beende ihn. Hier sind zur Sicherheit noch einmal alle Codes:", bodyStyle);
-        GUI.Box(new Rect(100, 250, 1080, 300), AllCodesText(), new GUIStyle(boxStyle) { fontSize = 22, alignment = TextAnchor.UpperLeft });
+            "Bitte wechsle jetzt in den Fragebogen und öffne die Seite \"Abschlussfragen\". Hier sind noch einmal alle Codes, falls du sie dort einfügen möchtest. Vielen Dank fürs Spielen :)", bodyStyle);
+        GUI.Box(new Rect(100, 250, 1080, 300), AllCodesText(), new GUIStyle(boxStyle) { fontSize = 20, alignment = TextAnchor.UpperLeft });
         if (GUI.Button(new Rect(490, 590, 300, 60), "Alle Codes kopieren", buttonStyle))
             CopyToClipboard(AllCodesText(), "Alle Codes kopiert.");
         if (!string.IsNullOrEmpty(copyInfo))

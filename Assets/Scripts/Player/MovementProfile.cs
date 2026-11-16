@@ -108,6 +108,15 @@ public class MovementProfile
     [Tooltip("Wandrutschen in diesem Profil (der bisherige Slide: Hochlaufen, kurzes Haften, Abrutschen). Beim alten Wandsprung gilt der Slide immer. Aus: kein Slide, der Wandsprung geht trotzdem bei Wandkontakt in der Luft")]
     public bool wallSlide = true;
 
+    [Tooltip("Höhe in Pixeln, die die Figur beim Wandkontakt im Aufstieg erst an der Wand hochrutscht (Slide-Phase, bevor sie haftet). Ohne Anlauftempo (Stillstand) gilt dieser Wert. 0 = kein Hochrutschen, die Figur haftet sofort. Nur wirksam bei Wall Slide an.")]
+    public float wallRunUpHeight = 80f;
+
+    [Tooltip("Höhe in Pixeln bei vollem Anlauftempo (siehe 'Wall Run Up Full Speed'). Dazwischen wird nach dem Tempo beim Wandkontakt geregelt (quadratisch: bei mittlerem Tempo deutlich näher am Stillstandswert), unabhängig von der Richtungstaste. 0 = nicht tempoabhängig, es gilt immer 'Wall Run Up Height'.")]
+    public float wallRunUpHeightAtFullSpeed = 0f;
+
+    [Tooltip("Tempo in Pixeln pro Sekunde, ab dem die volle Höhe gilt. 0 = Höchstgeschwindigkeit des Profils. Beim Momentum-Profil das Tempo des vollen Spin-Dashs (Höchsttempo mal Spin-Dash-Faktor).")]
+    public float wallRunUpFullSpeed = 0f;
+
     [Tooltip("Winkel des Wandsprungs in Grad, von der Wand aus gemessen: 0 = senkrecht an der Wand hoch, 90 = waagerecht von der Wand weg")]
     [Range(0f, 90f)] public float wallJumpAngle = 51f;
 
@@ -161,7 +170,7 @@ public class MovementProfile
                 // Wandsprung: Eigene Wahl (Super Mario World hat keinen Wandsprung), angelehnt an New Super Mario Bros.:
                 // steiler Winkel (20 Grad von der Senkrechten), senkrechte Geschwindigkeit etwa 90 % des Absprungs, danach 20 Frames (0,33 s)
                 // ohne Steuerung, in denen die Figur gut 3 Tiles von der Wand wegfliegt
-                wallJump = true, wallSlide = true, wallJumpAngle = 20f, wallJumpSpeed = 280f, wallJumpLockFrames = 20
+                wallJump = true, wallSlide = true, wallRunUpHeight = 0f, wallJumpAngle = 20f, wallJumpSpeed = 280f, wallJumpLockFrames = 20
             },
             // Sonic Mania: ca. 127 Frames Beschleunigung, 117 Frames Auslaufen, 10 Frames Bremsen.
             // Sprung 2,7 Figurenhöhen, Flugdauer lang 63 Frames, Gravitation konstant. Genau zwei Höhen (2,7 und 1,7):
@@ -182,7 +191,7 @@ public class MovementProfile
                 // Spin Dash: verkürzt den langen Beschleunigungsaufbau (Sonic: Rolle am Boden). Zusatz des Prototyps, nicht in der Anforderungsliste.
                 spinDash = true, spinDashPressesForFull = 3, spinDashMinSpeedFactor = 1.0f, spinDashMaxSpeedFactor = 1.5f,
                 // Wandsprung: Eigene Wahl (Sonic Mania hat keinen Wandsprung): senkrecht etwa 90 % des Absprungs, waagerecht knapp unter der Höchstgeschwindigkeit, längere Sperre wegen des höheren Tempos
-                wallJump = true, wallSlide = true, wallJumpAngle = 40f, wallJumpSpeed = 480f, wallJumpLockFrames = 12
+                wallJump = true, wallSlide = true, wallRunUpHeight = 10f, wallRunUpHeightAtFullSpeed = 120f, wallRunUpFullSpeed = 540f, wallJumpAngle = 40f, wallJumpSpeed = 480f, wallJumpLockFrames = 12
             }
         };
     }

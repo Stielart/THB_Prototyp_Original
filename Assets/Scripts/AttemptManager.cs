@@ -55,6 +55,9 @@ public class AttemptManager : MonoBehaviour
             spawnPoint = player.transform.position;
     }
 
+    /// <summary>Setzt nur den Versuchszähler auf 1 zurück (Messung beginnt erst am ersten Checkpoint, siehe ExperimentManager).</summary>
+    public void ResetAttempts() => Attempts = 1;
+
     public void SetCheckpoint(Checkpoint checkpoint)
     {
         if (activeCheckpoint == checkpoint)
